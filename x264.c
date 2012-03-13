@@ -113,6 +113,7 @@ static const char * const muxer_names[] =
     "auto",
     "raw",
     "mkv",
+    "webm",
     "flv",
 #if HAVE_GPAC
     "mp4",
@@ -388,6 +389,7 @@ static void help( x264_param_t *defaults, int longhelp )
         "Outfile type is selected by filename:\n"
         " .264 -> Raw bytestream\n"
         " .mkv -> Matroska\n"
+        " .webm -> WebM (VP8 only)\n"
         " .flv -> Flash Video\n"
         " .mp4 -> MP4 if compiled with GPAC support (%s)\n"
         "Output bit depth: %d (configured at compile time)\n"
@@ -1048,7 +1050,8 @@ static int select_output( const char *muxer, char *filename, x264_param_t *param
         return -1;
 #endif
     }
-    else if( !strcasecmp( ext, "mkv" ) )
+    else if( !strcasecmp( ext, "mkv" )
+          || !strcasecmp( ext, "webm" ) )
     {
         cli_output = mkv_output;
         param->b_annexb = 0;

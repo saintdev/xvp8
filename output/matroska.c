@@ -40,6 +40,8 @@ typedef struct
     uint32_t i_timebase_num;
     uint32_t i_timebase_den;
 
+    int webm;
+
 } mkv_hnd_t;
 
 static int open_file( char *psz_filename, hnd_t *p_handle, cli_output_opt_t *opt )
@@ -60,6 +62,9 @@ static int open_file( char *psz_filename, hnd_t *p_handle, cli_output_opt_t *opt
         free( p_mkv );
         return -1;
     }
+
+    if ( !strcasecmp( get_filename_extension(psz_filename), "webm") )
+        p_mkv->webm = 1;
 
     *p_handle = p_mkv;
 
@@ -119,44 +124,59 @@ static int write_headers( hnd_t handle, x264_nal_t *p_nal )
     uint8_t *sei = p_nal[2].p_payload;
 
     int ret;
-    uint8_t *avcC;
-    int avcC_len;
 
     if( !p_mkv->width || !p_mkv->height ||
         !p_mkv->d_width || !p_mkv->d_height )
         return -1;
 
-    avcC_len = 5 + 1 + 2 + sps_size + 1 + 2 + pps_size;
-    avcC = malloc( avcC_len );
-    if( !avcC )
-        return -1;
+    if (p_mkv->webm )
+    {
+       ret = mk_write_header( p_mkv->w, "xvp8" X264_VERSION,
+                              "webm", "V_VP8",
+                              NULL, 0, p_mkv->frame_duration, 50000,
+                              p_mkv->width, p_mkv->height,
+                              p_mkv->d_width, p_mkv->d_height,
+                              p_mkv->display_size_units );
+    }
+    else
+    {
+        uint8_t *avcC;
+        int avcC_len;
 
-    avcC[0] = 1;
-    avcC[1] = sps[1];
-    avcC[2] = sps[2];
-    avcC[3] = sps[3];
-    avcC[4] = 0xff; // nalu size length is four bytes
-    avcC[5] = 0xe1; // one sps
+        avcC_len = 5 + 1 + 2 + sps_size + 1 + 2 + pps_size;
+        avcC = malloc( avcC_len );
+        if( !avcC )
+            return -1;
 
-    avcC[6] = sps_size >> 8;
-    avcC[7] = sps_size;
+        avcC[0] = 1;
+        avcC[1] = sps[1];
+        avcC[2] = sps[2];
+        avcC[3] = sps[3];
+        avcC[4] = 0xff; // nalu size length is four bytes
+        avcC[5] = 0xe1; // one sps
 
-    memcpy( avcC+8, sps, sps_size );
+        avcC[6] = sps_size >> 8;
+        avcC[7] = sps_size;
 
-    avcC[8+sps_size] = 1; // one pps
-    avcC[9+sps_size] = pps_size >> 8;
-    avcC[10+sps_size] = pps_size;
+        memcpy( avcC+8, sps, sps_size );
 
-    memcpy( avcC+11+sps_size, pps, pps_size );
+        avcC[8+sps_size] = 1; // one pps
+        avcC[9+sps_size] = pps_size >> 8;
+        avcC[10+sps_size] = pps_size;
 
-    ret = mk_write_header( p_mkv->w, "x264" X264_VERSION, "V_MPEG4/ISO/AVC",
-                           avcC, avcC_len, p_mkv->frame_duration, 50000,
-                           p_mkv->width, p_mkv->height,
-                           p_mkv->d_width, p_mkv->d_height, p_mkv->display_size_units );
-    if( ret < 0 )
-        return ret;
+        memcpy( avcC+11+sps_size, pps, pps_size );
 
-    free( avcC );
+        ret = mk_write_header( p_mkv->w, "xvp8" X264_VERSION,
+                               "matroska", "V_MPEG4/ISO/AVC",
+                               avcC, avcC_len, p_mkv->frame_duration, 50000,
+                               p_mkv->width, p_mkv->height,
+                               p_mkv->d_width, p_mkv->d_height,
+                               p_mkv->display_size_units );
+        free( avcC );
+     }
+
+     if( ret < 0 )
+         return ret;
 
     // SEI
 

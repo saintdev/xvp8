@@ -321,7 +321,7 @@ mk_writer *mk_create_writer( const char *filename )
 }
 
 int mk_write_header( mk_writer *w, const char *writing_app,
-                     const char *codec_id,
+                     const char *doctype, const char *codec_id,
                      const void *codec_private, unsigned codec_private_size,
                      int64_t default_frame_duration,
                      int64_t timescale,
@@ -342,7 +342,7 @@ int mk_write_header( mk_writer *w, const char *writing_app,
     CHECK( mk_write_uint( c, 0x42f7, 1 ) ); // EBMLReadVersion
     CHECK( mk_write_uint( c, 0x42f2, 4 ) ); // EBMLMaxIDLength
     CHECK( mk_write_uint( c, 0x42f3, 8 ) ); // EBMLMaxSizeLength
-    CHECK( mk_write_string( c, 0x4282, "matroska") ); // DocType
+    CHECK( mk_write_string( c, 0x4282, doctype) ); // DocType
     CHECK( mk_write_uint( c, 0x4287, 2 ) ); // DocTypeVersion
     CHECK( mk_write_uint( c, 0x4285, 2 ) ); // DocTypeReadversion
     CHECK( mk_close_context( c, 0 ) );
@@ -354,7 +354,7 @@ int mk_write_header( mk_writer *w, const char *writing_app,
 
     if( !(c = mk_create_context( w, w->root, 0x1549a966 )) ) // SegmentInfo
         return -1;
-    CHECK( mk_write_string( c, 0x4d80, "Haali Matroska Writer b0" ) );
+    CHECK( mk_write_string( c, 0x4d80, "Haali Matroska Writer (xvp8 fork)" ) );
     CHECK( mk_write_string( c, 0x5741, writing_app ) );
     CHECK( mk_write_uint( c, 0x2ad7b1, w->timescale ) );
     CHECK( mk_write_float( c, 0x4489, 0) );

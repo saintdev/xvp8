@@ -37,7 +37,7 @@ typedef struct mk_writer mk_writer;
 mk_writer *mk_create_writer( const char *filename );
 
 int mk_write_header( mk_writer *w, const char *writing_app,
-                     const char *codec_id,
+                     const char *doctype, const char *codec_id,
                      const void *codec_private, unsigned codec_private_size,
                      int64_t default_frame_duration,
                      int64_t timescale,
