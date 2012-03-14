@@ -121,10 +121,15 @@ void x264_vp8rac_encode_decision( x264_cabac_t *cb, int prob, int b )
     x264_vp8rac_encode_renorm( cb );
 }
 
-/* Note: b is negated for this function */
-void x264_vp8rac_encode_bypass_c( x264_cabac_t *cb, int b )
+void x264_vp8rac_encode_bypass( x264_cabac_t *cb, int b )
 {
     x264_vp8rac_encode_decision( cb, 0x80, b );
+}
+
+void x264_vp8rac_encode_uint_bypass( x264_cabac_t *cb, int val, int bits )
+{
+    for( ; bits >= 0; bits-- )
+        x264_vp8rac_encode_decision( cb, 0x80, (val>>(bits-1))&1 );
 }
 
 void x264_vp8rac_encode_flush( x264_t *h, x264_cabac_t *cb )

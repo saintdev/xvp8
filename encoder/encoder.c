@@ -227,6 +227,18 @@ static void x264_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh
             bs_write( s, 8, h->param.i_width>>8    );
             bs_write( s, 8, h->param.i_height&0xff );
             bs_write( s, 8, h->param.i_height>>8   );
+            
+            x264_vp8rac_encode_init( &h->cabac, h->out.bs.p, h->out.bs.p_end );
+            x264_vp8rac_encode_bypass( &h->cabac, 0 ); /* colorspace */
+            x264_vp8rac_encode_bypass( &h->cabac, 0 ); /* don't skip DSP clamping */
+            x264_vp8rac_encode_bypass( &h->cabac, 0 ); /* no segmentation for now */
+            x264_vp8rac_encode_bypass( &h->cabac, 1 ); /* simple filter for now */
+            x264_vp8rac_encode_uint_bypass( &h->cabac, 0, 6 ); /* filter level: 0 */
+            x264_vp8rac_encode_uint_bypass( &h->cabac, 0, 3 ); /* filter sharpness: 0 */
+            x264_vp8rac_encode_bypass( &h->cabac, 0 ); /* no lf deltas */
+            x264_vp8rac_encode_uint_bypass( &h->cabac, 0, 2 ); /* No bitstream partitions */
+            
+            /* Quants and stuff here */
         }
         return;
     }
@@ -2267,7 +2279,7 @@ static int x264_slice_write( x264_t *h )
     }
 
     x264_slice_header_write( h, &h->out.bs, &h->sh, h->i_nal_ref_idc );
-    if( h->param.b_cabac )
+    if( h->param.b_cabac && !h->param.b_vp8 )
     {
         /* alignment needed */
         bs_align_1( &h->out.bs );
