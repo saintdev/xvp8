@@ -114,14 +114,8 @@ static int set_param( hnd_t handle, x264_param_t *p_param )
 static int write_headers( hnd_t handle, x264_nal_t *p_nal )
 {
     mkv_hnd_t *p_mkv = handle;
-
-    int sps_size = p_nal[0].i_payload - 4;
-    int pps_size = p_nal[1].i_payload - 4;
-    int sei_size = p_nal[2].i_payload;
-
-    uint8_t *sps = p_nal[0].p_payload + 4;
-    uint8_t *pps = p_nal[1].p_payload + 4;
-    uint8_t *sei = p_nal[2].p_payload;
+    int sps_size = 0, pps_size = 0, sei_size = 0;
+    uint8_t *sps = NULL, *pps = NULL, *sei = NULL;
 
     int ret;
 
@@ -129,7 +123,7 @@ static int write_headers( hnd_t handle, x264_nal_t *p_nal )
         !p_mkv->d_width || !p_mkv->d_height )
         return -1;
 
-    if (p_mkv->webm )
+    if( p_mkv->webm )
     {
        ret = mk_write_header( p_mkv->w, "xvp8" X264_VERSION,
                               "webm", "V_VP8",
@@ -142,6 +136,12 @@ static int write_headers( hnd_t handle, x264_nal_t *p_nal )
     {
         uint8_t *avcC;
         int avcC_len;
+        sps_size = p_nal[0].i_payload - 4;
+        pps_size = p_nal[1].i_payload - 4;
+        sei_size = p_nal[2].i_payload;
+        sps = p_nal[0].p_payload + 4;
+        pps = p_nal[1].p_payload + 4;
+        sei = p_nal[2].p_payload;
 
         avcC_len = 5 + 1 + 2 + sps_size + 1 + 2 + pps_size;
         avcC = malloc( avcC_len );
@@ -186,7 +186,7 @@ static int write_headers( hnd_t handle, x264_nal_t *p_nal )
             return -1;
         p_mkv->b_writing_frame = 1;
     }
-    if( mk_add_frame_data( p_mkv->w, sei, sei_size ) < 0 )
+    if( sei && mk_add_frame_data( p_mkv->w, sei, sei_size ) < 0 )
         return -1;
 
     return sei_size + sps_size + pps_size;

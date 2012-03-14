@@ -2279,14 +2279,15 @@ static int x264_slice_write( x264_t *h )
     }
 
     x264_slice_header_write( h, &h->out.bs, &h->sh, h->i_nal_ref_idc );
-    if( h->param.b_cabac && !h->param.b_vp8 )
+    if( h->param.b_cabac )
     {
         /* alignment needed */
         bs_align_1( &h->out.bs );
 
         /* init cabac */
         x264_cabac_context_init( h, &h->cabac, h->sh.i_type, x264_clip3( h->sh.i_qp-QP_BD_OFFSET, 0, 51 ), h->sh.i_cabac_init_idc );
-        x264_cabac_encode_init ( &h->cabac, h->out.bs.p, h->out.bs.p_end );
+        if( !h->param.b_vp8 )
+            x264_cabac_encode_init( &h->cabac, h->out.bs.p, h->out.bs.p_end );
         last_emu_check = h->cabac.p;
     }
     else
