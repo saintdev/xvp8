@@ -19,7 +19,8 @@ SRCS = common/mc.c common/predict.c common/pixel.c common/macroblock.c \
        common/vp8rac.c \
        encoder/analyse.c encoder/me.c encoder/ratecontrol.c \
        encoder/set.c encoder/macroblock.c encoder/cabac.c \
-       encoder/cavlc.c encoder/encoder.c encoder/lookahead.c
+       encoder/cavlc.c encoder/encoder.c encoder/lookahead.c \
+       encoder/vp8set.c
 
 SRCCLI = x264.c input/input.c input/timecode.c input/raw.c input/y4m.c \
          output/raw.c output/matroska.c output/matroska_ebml.c \

@@ -41,4 +41,6 @@ void x264_sei_frame_packing_write( x264_t *h, bs_t *s );
 void x264_sei_write( bs_t *s, uint8_t *payload, int payload_size, int payload_type );
 void x264_filler_write( x264_t *h, bs_t *s, int filler );
 
+void x264_vp8_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh );
+
 #endif
