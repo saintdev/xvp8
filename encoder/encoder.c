@@ -490,6 +490,31 @@ static int x264_validate_parameters( x264_t *h, int b_open )
         return -1;
     }
 
+    if( h->param.b_vp8 )
+    {
+        h->param.i_bframe = 0;
+        h->param.analyse.b_transform_8x8 = 0;
+        h->param.analyse.i_trellis = 0;
+        h->param.analyse.i_weighted_pred = 0;
+        h->param.analyse.b_mixed_references = 0;
+        /* TODO: make dct decimate work only per-mb instead of per-cbp for VP8 */
+        h->param.analyse.b_dct_decimate = 0;
+        h->param.b_cabac = 1;
+        h->param.i_frame_reference = 1;
+        h->param.i_dpb_size = 0;
+        h->param.b_constrained_intra = 0;
+        h->param.b_aud = 0;
+        h->param.i_slice_max_size = 0;
+        h->param.i_slice_max_mbs = 0;
+        h->param.i_slice_count = 0;
+        h->param.b_sliced_threads = 0;
+        if( h->param.b_interlaced )
+        {
+            x264_log( h, X264_LOG_WARNING, "VP8 + interlaced is not implemented\n" );
+            h->param.b_interlaced = 0;
+        }
+    }
+
     if( h->param.i_threads == X264_THREADS_AUTO )
         h->param.i_threads = x264_cpu_num_processors() * (h->param.b_sliced_threads?2:3)/2;
     if( h->param.i_threads > 1 )

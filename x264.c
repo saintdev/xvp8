@@ -1056,6 +1056,8 @@ static int select_output( const char *muxer, char *filename, x264_param_t *param
         cli_output = mkv_output;
         param->b_annexb = 0;
         param->b_repeat_headers = 0;
+        if( !strcasecmp( ext, "webm" ) )
+            param->b_vp8 = 1;
     }
     else if( !strcasecmp( ext, "flv" ) )
     {

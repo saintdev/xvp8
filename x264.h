@@ -41,7 +41,7 @@
 
 #include "x264_config.h"
 
-#define X264_BUILD 122
+#define X264_BUILD 12
 
 /* x264_t:
  *      opaque handler for encoder */
@@ -255,6 +255,7 @@ typedef struct x264_param_t
     int         i_csp;         /* CSP of encoded bitstream */
     int         i_level_idc;
     int         i_frame_total; /* number of frames to encode if known, else 0 */
+    int         b_vp8;  /* Encode output as VP8 instead of H.264 */
 
     /* NAL HRD
      * Uses Buffering and Picture Timing SEIs to signal HRD
