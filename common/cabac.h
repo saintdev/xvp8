@@ -74,6 +74,7 @@ void x264_vp8rac_encode_init( x264_cabac_t *cb, uint8_t *p_data, uint8_t *p_end 
 void x264_vp8rac_encode_decision( x264_cabac_t *cb, int prob, int b );
 void x264_vp8rac_encode_bypass( x264_cabac_t *cb, int b );
 void x264_vp8rac_encode_uint_bypass( x264_cabac_t *cb, int val, int bits );
+void x264_vp8rac_encode_sint_bypass( x264_cabac_t *cb, int val, int bits );
 void x264_vp8rac_encode_flush( x264_t *h, x264_cabac_t *cb );
 
 #if HAVE_MMX

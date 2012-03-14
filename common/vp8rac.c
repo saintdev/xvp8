@@ -129,12 +129,19 @@ void x264_vp8rac_encode_bypass( x264_cabac_t *cb, int b )
 void x264_vp8rac_encode_uint_bypass( x264_cabac_t *cb, int val, int bits )
 {
     for( ; bits >= 0; bits-- )
-        x264_vp8rac_encode_decision( cb, 0x80, (val>>(bits-1))&1 );
+        x264_vp8rac_encode_bypass( cb, (val>>(bits-1))&1 );
+}
+
+void x264_vp8rac_encode_sint_bypass( x264_cabac_t *cb, int val, int bits )
+{
+    for( ; bits >= 0; bits-- )
+        x264_vp8rac_encode_bypass( cb, (abs(val)>>(bits-1))&1 );
+    x264_vp8rac_encode_bypass( cb, val < 0 );
 }
 
 void x264_vp8rac_encode_flush( x264_t *h, x264_cabac_t *cb )
 {
     for( int i = 0; i < 32; i++ )
-        x264_vp8rac_encode_decision( cb, 0x80, 0 );
+        x264_vp8rac_encode_bypass( cb, 0 );
 }
 
