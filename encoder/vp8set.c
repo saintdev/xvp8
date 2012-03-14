@@ -52,38 +52,52 @@ void x264_vp8_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh )
         bs_write( s, 8, h->param.i_height&0xff );
         bs_write( s, 8, h->param.i_height>>8   );
     }
-        
-    x264_vp8rac_encode_init( &h->cabac, h->out.bs.p, h->out.bs.p_end );
+
+    x264_cabac_t *cb = &h->cabac;
+    x264_vp8rac_encode_init( cb, h->out.bs.p, h->out.bs.p_end );
     if( keyframe )
     {
-        x264_vp8rac_encode_bypass( &h->cabac, 0 ); /* colorspace */
-        x264_vp8rac_encode_bypass( &h->cabac, 0 ); /* don't skip DSP clamping */
+        x264_vp8rac_encode_bypass( cb, 0 ); /* colorspace */
+        x264_vp8rac_encode_bypass( cb, 0 ); /* don't skip DSP clamping */
     }
 
-    x264_vp8rac_encode_bypass( &h->cabac, 0 ); /* no segmentation for now */
-    x264_vp8rac_encode_bypass( &h->cabac, 1 ); /* simple filter for now */
-    x264_vp8rac_encode_uint_bypass( &h->cabac, 0, 6 ); /* filter level: 0 */
-    x264_vp8rac_encode_uint_bypass( &h->cabac, 0, 3 ); /* filter sharpness: 0 */
-    x264_vp8rac_encode_bypass( &h->cabac, 0 ); /* no lf deltas */
-    x264_vp8rac_encode_uint_bypass( &h->cabac, 0, 2 ); /* No bitstream partitions */
+    x264_vp8rac_encode_bypass( cb, 0 ); /* no segmentation for now */
+    x264_vp8rac_encode_bypass( cb, 1 ); /* simple filter for now */
+    x264_vp8rac_encode_uint_bypass( cb, 0, 6 ); /* filter level: 0 */
+    x264_vp8rac_encode_uint_bypass( cb, 0, 3 ); /* filter sharpness: 0 */
+    x264_vp8rac_encode_bypass( cb, 0 ); /* no lf deltas */
+    x264_vp8rac_encode_uint_bypass( cb, 0, 2 ); /* No bitstream partitions */
     
     /* FIXME: use real quantizers */
     int base_qi = 20;
-    x264_vp8rac_encode_uint_bypass( &h->cabac, base_qi, 7 ); /* yac_qi */
-    x264_vp8rac_encode_sint_bypass( &h->cabac, 0, 4 );       /* ydc_delta */
-    x264_vp8rac_encode_sint_bypass( &h->cabac, 0, 4 );       /* y2dc_delta */
-    x264_vp8rac_encode_sint_bypass( &h->cabac, 0, 4 );       /* y2ac_delta */
-    x264_vp8rac_encode_sint_bypass( &h->cabac, 0, 4 );       /* uvdc_delta */
-    x264_vp8rac_encode_sint_bypass( &h->cabac, 0, 4 );       /* uvac_delta */
+    x264_vp8rac_encode_uint_bypass( cb, base_qi, 7 ); /* yac_qi */
+    x264_vp8rac_encode_sint_bypass( cb, 0, 4 );       /* ydc_delta */
+    x264_vp8rac_encode_sint_bypass( cb, 0, 4 );       /* y2dc_delta */
+    x264_vp8rac_encode_sint_bypass( cb, 0, 4 );       /* y2ac_delta */
+    x264_vp8rac_encode_sint_bypass( cb, 0, 4 );       /* uvdc_delta */
+    x264_vp8rac_encode_sint_bypass( cb, 0, 4 );       /* uvac_delta */
     
     if( !keyframe )
     {
-        x264_vp8rac_encode_bypass( &h->cabac, 0 ); /* Don't update golden */
-        x264_vp8rac_encode_bypass( &h->cabac, 0 ); /* Don't update altref */
-        x264_vp8rac_encode_bypass( &h->cabac, 0 ); /* No golden sign bias */
-        x264_vp8rac_encode_bypass( &h->cabac, 0 ); /* No altref sign bias */
+        x264_vp8rac_encode_bypass( cb, 0 ); /* Don't update golden */
+        x264_vp8rac_encode_bypass( cb, 0 ); /* Don't update altref */
+        x264_vp8rac_encode_bypass( cb, 0 ); /* No golden sign bias */
+        x264_vp8rac_encode_bypass( cb, 0 ); /* No altref sign bias */
     }
-    
-    /* TODO: frame probability updates, these are rather scary and will require
-     * that we add actual probability tables. */
+
+    x264_vp8rac_encode_bypass( cb, 0 ); /* don't save updated probability tables */
+    x264_vp8rac_encode_bypass( cb, 1 ); /* This frame is referenced, update the last ref */
+
+    /* Let's not update probabilities yet */
+    for( int i = 0; i < 4; i++)
+        for( int j = 0; j < 8; j++ )
+            for( int k = 0; k < 3; k++ )
+                for( int l = 0; l < NUM_DCT_TOKENS-1; l++ )
+                    x264_vp8rac_encode_decision( cb, x264_vp8_dct_update_probs[i][j][k][l], 0 );
+
+    x264_vp8rac_encode_bypass( cb, 0 ); /* Disable MB-skip for now */
+    if( !keyframe )
+    {
+        /* MV and mode updates here, we'll deal with them later. */
+    }
 }

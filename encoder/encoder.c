@@ -2507,7 +2507,10 @@ reencode:
 
     if( h->param.b_cabac )
     {
-        x264_cabac_encode_flush( h, &h->cabac );
+        if( h->param.b_vp8 )
+            x264_vp8rac_encode_flush( h, &h->cabac );
+        else
+            x264_cabac_encode_flush ( h, &h->cabac );
         h->out.bs.p = h->cabac.p;
     }
     else
