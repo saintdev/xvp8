@@ -228,7 +228,7 @@ void x264_vp8rac_encode_init_core( x264_cabac_t *cb )
 {
     cb->i_low   = 0;
     cb->i_range = 255;
-    cb->i_queue = -9;
+    cb->i_queue = -10;
     cb->i_bytes_outstanding = 0;
 }
 
