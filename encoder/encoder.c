@@ -202,8 +202,34 @@ static void x264_slice_header_init( x264_t *h, x264_slice_header_t *sh,
     sh->i_beta_offset = param->i_deblocking_filter_beta << 1;
 }
 
-static void x264_slice_header_write( bs_t *s, x264_slice_header_t *sh, int i_nal_ref_idc )
+static void x264_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh, int i_nal_ref_idc )
 {
+    if( h->param.b_vp8 )
+    {
+        int header_byte = ((sh->i_idr_pic_id >= 0)   << 0)
+                        + ((0 /* regular profile */) << 1)
+                        + ((0 /* not invisible */)   << 4);
+        /* I'm making up a number now for testing. */
+        int header_size = 30;
+        int header = (header_size << 5) + header_byte;
+        /* Stupid little-endian headers */
+        bs_write( s, 8, (header>> 0)&0xff );
+        bs_write( s, 8, (header>> 8)&0xff );
+        bs_write( s, 8, (header>>16)      );
+
+        if( sh->i_idr_pic_id >= 0 )
+        {
+            /* Startcode */
+            bs_write( s, 24, 0x9d012a );
+
+            /* Fixme: make sure to cap resolutions at 0x3fff to avoid hscale/vscale */
+            bs_write( s, 8, h->param.i_width&0xff  );
+            bs_write( s, 8, h->param.i_width>>8    );
+            bs_write( s, 8, h->param.i_height&0xff );
+            bs_write( s, 8, h->param.i_height>>8   );
+        }
+        return;
+    }
     if( sh->b_mbaff )
     {
         int first_x = sh->i_first_mb % sh->sps->i_mb_width;
@@ -1583,32 +1609,36 @@ int x264_encoder_headers( x264_t *h, x264_nal_t **pp_nal, int *pi_nal )
     int frame_size = 0;
     /* init bitstream context */
     h->out.i_nal = 0;
-    bs_init( &h->out.bs, h->out.p_bitstream, h->out.i_bitstream );
 
-    /* Write SEI, SPS and PPS. */
+    if( !h->param.b_vp8 )
+    {
+        bs_init( &h->out.bs, h->out.p_bitstream, h->out.i_bitstream );
 
-    /* generate sequence parameters */
-    x264_nal_start( h, NAL_SPS, NAL_PRIORITY_HIGHEST );
-    x264_sps_write( &h->out.bs, h->sps );
-    if( x264_nal_end( h ) )
-        return -1;
+        /* Write SEI, SPS and PPS. */
 
-    /* generate picture parameters */
-    x264_nal_start( h, NAL_PPS, NAL_PRIORITY_HIGHEST );
-    x264_pps_write( &h->out.bs, h->sps, h->pps );
-    if( x264_nal_end( h ) )
-        return -1;
+        /* generate sequence parameters */
+        x264_nal_start( h, NAL_SPS, NAL_PRIORITY_HIGHEST );
+        x264_sps_write( &h->out.bs, h->sps );
+        if( x264_nal_end( h ) )
+            return -1;
 
-    /* identify ourselves */
-    x264_nal_start( h, NAL_SEI, NAL_PRIORITY_DISPOSABLE );
-    if( x264_sei_version_write( h, &h->out.bs ) )
-        return -1;
-    if( x264_nal_end( h ) )
-        return -1;
+        /* generate picture parameters */
+        x264_nal_start( h, NAL_PPS, NAL_PRIORITY_HIGHEST );
+        x264_pps_write( &h->out.bs, h->sps, h->pps );
+        if( x264_nal_end( h ) )
+            return -1;
 
-    frame_size = x264_encoder_encapsulate_nals( h, 0 );
-    if( frame_size < 0 )
-        return -1;
+        /* identify ourselves */
+        x264_nal_start( h, NAL_SEI, NAL_PRIORITY_DISPOSABLE );
+        if( x264_sei_version_write( h, &h->out.bs ) )
+            return -1;
+        if( x264_nal_end( h ) )
+            return -1;
+
+        frame_size = x264_encoder_encapsulate_nals( h, 0 );
+        if( frame_size < 0 )
+            return -1;
+    }
 
     /* now set output*/
     *pi_nal = h->out.i_nal;
@@ -2236,7 +2266,7 @@ static int x264_slice_write( x264_t *h )
         h->sh.i_qp_delta = h->sh.i_qp - h->pps->i_pic_init_qp;
     }
 
-    x264_slice_header_write( &h->out.bs, &h->sh, h->i_nal_ref_idc );
+    x264_slice_header_write( h, &h->out.bs, &h->sh, h->i_nal_ref_idc );
     if( h->param.b_cabac )
     {
         /* alignment needed */
@@ -3047,7 +3077,7 @@ int     x264_encoder_encode( x264_t *h,
         }
     }
 
-    if( h->fenc->b_keyframe )
+    if( h->fenc->b_keyframe && !h->param.b_vp8 )
     {
         /* Write SPS and PPS */
         if( h->param.b_repeat_headers )
