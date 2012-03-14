@@ -2254,8 +2254,7 @@ static int x264_slice_write( x264_t *h )
 
         /* init cabac */
         x264_cabac_context_init( h, &h->cabac, h->sh.i_type, x264_clip3( h->sh.i_qp-QP_BD_OFFSET, 0, 51 ), h->sh.i_cabac_init_idc );
-        if( !h->param.b_vp8 )
-            x264_cabac_encode_init( &h->cabac, h->out.bs.p, h->out.bs.p_end );
+        x264_cabac_encode_init( &h->cabac, h->out.bs.p, h->out.bs.p_end );
         last_emu_check = h->cabac.p;
     }
     else
@@ -2507,10 +2506,7 @@ reencode:
 
     if( h->param.b_cabac )
     {
-        if( h->param.b_vp8 )
-            x264_vp8rac_encode_flush( h, &h->cabac );
-        else
-            x264_cabac_encode_flush ( h, &h->cabac );
+        x264_cabac_encode_flush( h, &h->cabac );
         h->out.bs.p = h->cabac.p;
     }
     else

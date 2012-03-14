@@ -310,10 +310,3 @@ void x264_vp8rac_encode_sint_bypass( x264_cabac_t *cb, int val, int bits )
         x264_vp8rac_encode_bypass( cb, (abs(val)>>(bits-1))&1 );
     x264_vp8rac_encode_bypass( cb, val < 0 );
 }
-
-void x264_vp8rac_encode_flush( x264_t *h, x264_cabac_t *cb )
-{
-    for( int i = 0; i < 32; i++ )
-        x264_vp8rac_encode_bypass( cb, 0 );
-}
-
