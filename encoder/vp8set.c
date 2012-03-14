@@ -53,9 +53,10 @@ void x264_vp8_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh )
         bs_write( s, 8, h->param.i_height&0xff );
         bs_write( s, 8, h->param.i_height>>8   );
     }
+    bs_flush( s );
 
     x264_cabac_t *cb = &h->cabac;
-    x264_vp8rac_encode_init( cb, h->out.bs.p, h->out.bs.p_end );
+    x264_vp8rac_encode_init( cb, s->p, s->p_end );
     if( keyframe )
     {
         x264_vp8rac_encode_bypass( cb, 0 ); /* colorspace */
@@ -90,7 +91,7 @@ void x264_vp8_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh )
     x264_vp8rac_encode_bypass( cb, 1 ); /* This frame is referenced, update the last ref */
 
     /* Let's not update probabilities yet */
-    for( int i = 0; i < 4; i++)
+    for( int i = 0; i < 4; i++ )
         for( int j = 0; j < 8; j++ )
             for( int k = 0; k < 3; k++ )
                 for( int l = 0; l < NUM_DCT_TOKENS-1; l++ )
@@ -102,9 +103,9 @@ void x264_vp8_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh )
         /* MV and mode updates here, we'll deal with them later. */
     }
     x264_vp8rac_encode_flush( h, cb );
-    header_size = (cb->p - header_ptr) << 5;
+    s->p = cb->p;
+    header_size = (s->p - header_ptr) << 5;
     header_ptr[0] |= (header_size>>0)&0xff;
     header_ptr[1] |= (header_size>>8)&0xff;
     header_ptr[2] |= (header_size>>16);
-    s->p = cb->p;
 }

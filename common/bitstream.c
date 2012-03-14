@@ -53,6 +53,13 @@ void x264_nal_encode( x264_t *h, uint8_t *dst, x264_nal_t *nal )
     uint8_t *src = nal->p_payload;
     uint8_t *end = nal->p_payload + nal->i_payload;
     uint8_t *orig_dst = dst;
+    
+    if( h->param.b_vp8 )
+    {
+        memcpy( dst, src, nal->i_payload );
+        nal->p_payload = orig_dst;
+        return 0;
+    }
 
     if( h->param.b_annexb )
     {
