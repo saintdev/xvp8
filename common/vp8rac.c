@@ -284,11 +284,12 @@ static inline void x264_vp8rac_encode_renorm( x264_cabac_t *cb )
 void x264_vp8rac_encode_decision( x264_cabac_t *cb, int prob, int b )
 {
     int i_range_lps = 1 + (((cb->i_range-1) * prob)>>8);
-    cb->i_range -= i_range_lps;
-    if( !b )
+    int range = cb->i_range;
+    cb->i_range = i_range_lps;
+    if( b )
     {
-        cb->i_low += cb->i_range;
-        cb->i_range = i_range_lps;
+        cb->i_low += i_range_lps;
+        cb->i_range = range - i_range_lps;
     }
     x264_vp8rac_encode_renorm( cb );
 }
