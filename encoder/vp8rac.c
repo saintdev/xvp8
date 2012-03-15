@@ -59,7 +59,7 @@ void x264_macroblock_write_vp8rac( x264_t *h, x264_cabac_t *cb )
             x264_vp8rac_encode_decision( cb, (pred&1)?128:163, pred>>1 );
         }
 
-        /* luma pred mode */
+        /* chroma pred mode */
         int pred = x264_mb_chroma_pred_mode_fix[h->mb.i_chroma_pred_mode];
         if( pred != I_PRED_CHROMA_DC )
         {
