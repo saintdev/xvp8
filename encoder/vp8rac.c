@@ -32,7 +32,7 @@
 #define RDO_SKIP_BS 0
 #endif
 
-void x264_macroblock_write_cabac( x264_t *h, x264_cabac_t *cb )
+void x264_macroblock_write_vp8rac( x264_t *h, x264_cabac_t *cb )
 {
 #if !RDO_SKIP_BS
     const int i_mb_pos_start = x264_cabac_pos( cb );
@@ -79,6 +79,8 @@ void x264_macroblock_write_cabac( x264_t *h, x264_cabac_t *cb )
     i_mb_pos_tex = x264_cabac_pos( cb );
     h->stat.frame.i_mv_bits += i_mb_pos_tex - i_mb_pos_start;
 #endif
+
+    /* We'll do the residual stuff later... */
 
 #if !RDO_SKIP_BS
     h->stat.frame.i_tex_bits += x264_cabac_pos( cb ) - i_mb_pos_tex;

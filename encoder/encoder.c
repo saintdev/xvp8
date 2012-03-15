@@ -504,6 +504,8 @@ static int x264_validate_parameters( x264_t *h, int b_open )
         h->param.analyse.b_mixed_references = 0;
         /* TODO: make dct decimate work only per-mb instead of per-cbp for VP8 */
         h->param.analyse.b_dct_decimate = 0;
+        /* i4x4 off for now */
+        h->param.analyse.intra = 0;
         h->param.b_cabac = 1;
         /* Up this to 3 later? */
         h->param.i_frame_reference = 1;
@@ -2247,7 +2249,12 @@ static int x264_slice_write( x264_t *h )
     }
 
     x264_slice_header_write( h, &h->out.bs, &h->sh, h->i_nal_ref_idc );
-    if( h->param.b_cabac )
+    if( h->param.b_vp8 )
+    {
+        x264_vp8rac_encode_init( &h->cabac, h->out.bs.p, h->out.bs.p_end );
+        last_emu_check = h->cabac.p;
+    }
+    else if( h->param.b_cabac )
     {
         /* alignment needed */
         bs_align_1( &h->out.bs );
@@ -2313,7 +2320,11 @@ static int x264_slice_write( x264_t *h )
 reencode:
         x264_macroblock_encode( h );
 
-        if( h->param.b_cabac )
+        if( h->param.b_vp8 )
+        {
+            x264_macroblock_write_vp8rac( h, &h->cabac );
+        }
+        else if( h->param.b_cabac )
         {
             if( mb_xy > h->sh.i_first_mb && !(SLICE_MBAFF && (i_mb_y&1)) )
                 x264_cabac_encode_terminal( &h->cabac );
@@ -2504,7 +2515,12 @@ reencode:
     }
     h->out.nal[h->out.i_nal].i_last_mb = h->sh.i_last_mb;
 
-    if( h->param.b_cabac )
+    if( h->param.b_vp8 )
+    {
+        x264_vp8rac_encode_flush( h, &h->cabac );
+        h->out.bs.p = h->cabac.p;
+    }
+    else if( h->param.b_cabac )
     {
         x264_cabac_encode_flush( h, &h->cabac );
         h->out.bs.p = h->cabac.p;
