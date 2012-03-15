@@ -97,7 +97,8 @@ void x264_vp8_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh )
                 for( int l = 0; l < NUM_DCT_TOKENS-1; l++ )
                     x264_vp8rac_encode_decision( cb, x264_vp8_dct_update_probs[i][j][k][l], 0 );
 
-    x264_vp8rac_encode_bypass( cb, 0 ); /* Disable MB-skip for now */
+    x264_vp8rac_encode_bypass( cb, 1 ); /* mb skip enabled */
+    x264_vp8rac_encode_uint_bypass( cb, 0x80, 8 ); /* Just set even probability for now. */
     if( !keyframe )
     {
         /* MV and mode updates here, we'll deal with them later. */

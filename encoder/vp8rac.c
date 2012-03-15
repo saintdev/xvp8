@@ -39,6 +39,9 @@ void x264_macroblock_write_cabac( x264_t *h, x264_cabac_t *cb )
     int       i_mb_pos_tex;
 #endif
 
+    /* Force skip for now */
+    x264_vp8rac_encode_decision( cb, 0x80, 1 );
+
     if( h->sh.i_type == SLICE_TYPE_I )
     {
         /* mb type */
