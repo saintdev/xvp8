@@ -32,7 +32,7 @@ void x264_vp8_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh )
     int keyframe = sh->i_idr_pic_id >= 0;
     int header_byte = (!keyframe               << 0)
                     + (0 /* regular profile */ << 1)
-                    + (0 /* not invisible */   << 4);
+                    + (1 /* not invisible */   << 4);
     uint8_t *header_ptr = s->p;
     /* We go back and fix this later. */
     int header_size = 0;
