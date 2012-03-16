@@ -88,7 +88,8 @@ void x264_vp8_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh )
     }
 
     x264_vp8rac_encode_bypass( cb, 0 ); /* don't save updated probability tables */
-    x264_vp8rac_encode_bypass( cb, 1 ); /* This frame is referenced, update the last ref */
+    if( !keyframe )
+        x264_vp8rac_encode_bypass( cb, 1 ); /* This frame is referenced, update the last ref */
 
     /* Let's not update probabilities yet */
     for( int i = 0; i < 4; i++ )
