@@ -62,8 +62,8 @@ void flv_put_be64( flv_buffer *c, uint64_t val )
 
 void flv_put_le64( flv_buffer *c, uint64_t val )
 {
-    flv_put_be32( c, val );
-    flv_put_be32( c, val >> 32 );
+    flv_put_le32( c, val );
+    flv_put_le32( c, val >> 32 );
 }
 
 void flv_put_be16( flv_buffer *c, uint16_t val )
