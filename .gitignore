@@ -31,8 +31,10 @@ checkasm
 *.ffindex
 *.avs
 *.mkv
+*.webm
 *.flv
 *.mp4
+*.ivf
 *.y4m
 *.yuv
 *.log

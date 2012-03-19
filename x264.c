@@ -115,6 +115,7 @@ static const char * const muxer_names[] =
     "mkv",
     "webm",
     "flv",
+    "ivf",
 #if HAVE_GPAC
     "mp4",
 #endif
@@ -391,6 +392,7 @@ static void help( x264_param_t *defaults, int longhelp )
         " .mkv -> Matroska\n"
         " .webm -> WebM (VP8 only)\n"
         " .flv -> Flash Video\n"
+        " .ivf -> IVF (VP8 only)\n"
         " .mp4 -> MP4 if compiled with GPAC support (%s)\n"
         "Output bit depth: %d (configured at compile time)\n"
         "\n"
@@ -1064,6 +1066,13 @@ static int select_output( const char *muxer, char *filename, x264_param_t *param
         cli_output = flv_output;
         param->b_annexb = 0;
         param->b_repeat_headers = 0;
+    }
+    else if( !strcasecmp( ext, "ivf" ) )
+    {
+        cli_output = ivf_output;
+        param->b_annexb = 0;
+        param->b_repeat_headers = 0;
+        param->b_vp8 = 1;
     }
     else
         cli_output = raw_output;
