@@ -34,6 +34,7 @@ checkasm
 *.webm
 *.flv
 *.mp4
+*.ivf
 *.y4m
 *.yuv
 *.log
