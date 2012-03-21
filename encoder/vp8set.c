@@ -69,7 +69,7 @@ void x264_vp8_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh )
     x264_vp8rac_encode_uint_bypass( cb, 0, 3 ); /* filter sharpness: 0 */
     x264_vp8rac_encode_bypass( cb, 0 ); /* no lf deltas */
     x264_vp8rac_encode_uint_bypass( cb, 0, 2 ); /* No bitstream partitions */
-    
+
     /* FIXME: use real quantizers */
     int base_qi = 20;
     x264_vp8rac_encode_uint_bypass( cb, base_qi, 7 ); /* yac_qi */
@@ -78,7 +78,7 @@ void x264_vp8_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh )
     x264_vp8rac_encode_sint_bypass( cb, 0, 4 );       /* y2ac_delta */
     x264_vp8rac_encode_sint_bypass( cb, 0, 4 );       /* uvdc_delta */
     x264_vp8rac_encode_sint_bypass( cb, 0, 4 );       /* uvac_delta */
-    
+
     if( !keyframe )
     {
         x264_vp8rac_encode_bypass( cb, 0 ); /* Don't update golden */
