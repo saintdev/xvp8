@@ -41,7 +41,6 @@ typedef struct
     uint32_t i_timebase_den;
 
     int webm;
-
 } mkv_hnd_t;
 
 static int open_file( char *psz_filename, hnd_t *p_handle, cli_output_opt_t *opt )
@@ -63,7 +62,7 @@ static int open_file( char *psz_filename, hnd_t *p_handle, cli_output_opt_t *opt
         return -1;
     }
 
-    if ( !strcasecmp( get_filename_extension(psz_filename), "webm") )
+    if( !strcasecmp( get_filename_extension(psz_filename), "webm" ) )
         p_mkv->webm = 1;
 
     *p_handle = p_mkv;
