@@ -224,7 +224,7 @@ static const uint8_t x264_vp8rac_renorm_shift[256] =
 /*****************************************************************************
  *
  *****************************************************************************/
-void x264_vp8rac_encode_init_core( x264_cabac_t *cb )
+void x264_vp8rac_encode_init_core( x264_vp8rac_t *cb )
 {
     cb->i_low   = 0;
     cb->i_range = 255;
@@ -232,7 +232,7 @@ void x264_vp8rac_encode_init_core( x264_cabac_t *cb )
     cb->i_bytes_outstanding = 0;
 }
 
-void x264_vp8rac_encode_init( x264_cabac_t *cb, uint8_t *p_data, uint8_t *p_end )
+void x264_vp8rac_encode_init( x264_vp8rac_t *cb, uint8_t *p_data, uint8_t *p_end )
 {
     x264_vp8rac_encode_init_core( cb );
     cb->p_start = p_data;
@@ -240,7 +240,7 @@ void x264_vp8rac_encode_init( x264_cabac_t *cb, uint8_t *p_data, uint8_t *p_end 
     cb->p_end   = p_end;
 }
 
-static inline void x264_vp8rac_putbyte( x264_cabac_t *cb )
+static inline void x264_vp8rac_putbyte( x264_vp8rac_t *cb )
 {
     if( cb->i_queue >= 0 )
     {
@@ -272,7 +272,7 @@ static inline void x264_vp8rac_putbyte( x264_cabac_t *cb )
     }
 }
 
-static inline void x264_vp8rac_encode_renorm( x264_cabac_t *cb )
+static inline void x264_vp8rac_encode_renorm( x264_vp8rac_t *cb )
 {
     int shift = x264_vp8rac_renorm_shift[cb->i_range];
     cb->i_range <<= shift;
@@ -281,7 +281,7 @@ static inline void x264_vp8rac_encode_renorm( x264_cabac_t *cb )
     x264_vp8rac_putbyte( cb );
 }
 
-void x264_vp8rac_encode_decision( x264_cabac_t *cb, int prob, int b )
+void x264_vp8rac_encode_decision( x264_vp8rac_t *cb, int prob, int b )
 {
     int i_range_lps = 1 + (((cb->i_range-1) * prob)>>8);
     int range = cb->i_range;
@@ -294,18 +294,18 @@ void x264_vp8rac_encode_decision( x264_cabac_t *cb, int prob, int b )
     x264_vp8rac_encode_renorm( cb );
 }
 
-void x264_vp8rac_encode_bypass( x264_cabac_t *cb, int b )
+void x264_vp8rac_encode_bypass( x264_vp8rac_t *cb, int b )
 {
     x264_vp8rac_encode_decision( cb, 0x80, b );
 }
 
-void x264_vp8rac_encode_uint_bypass( x264_cabac_t *cb, int val, int bits )
+void x264_vp8rac_encode_uint_bypass( x264_vp8rac_t *cb, int val, int bits )
 {
     for( --bits; bits >= 0; bits-- )
         x264_vp8rac_encode_bypass( cb, (val>>bits)&1 );
 }
 
-void x264_vp8rac_encode_sint_bypass( x264_cabac_t *cb, int val, int bits )
+void x264_vp8rac_encode_sint_bypass( x264_vp8rac_t *cb, int val, int bits )
 {
     x264_vp8rac_encode_bypass( cb, !!val );
     if( !val )

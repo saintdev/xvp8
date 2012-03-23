@@ -27,19 +27,23 @@
 #ifndef X264_CABAC_H
 #define X264_CABAC_H
 
+#define CABAC_COMMON \
+ \
+    /* state */ \
+    int i_low; \
+    int i_range; \
+ \
+    /* bit stream */ \
+    int i_queue; /* stored with an offset of -8 for faster asm */ \
+    int i_bytes_outstanding; \
+ \
+    uint8_t *p_start; \
+    uint8_t *p; \
+    uint8_t *p_end;
+
 typedef struct
 {
-    /* state */
-    int i_low;
-    int i_range;
-
-    /* bit stream */
-    int i_queue; //stored with an offset of -8 for faster asm
-    int i_bytes_outstanding;
-
-    uint8_t *p_start;
-    uint8_t *p;
-    uint8_t *p_end;
+    CABAC_COMMON
 
     /* aligned for memcpy_aligned starting here */
     ALIGNED_16( int f8_bits_encoded ); // only if using x264_cabac_size_decision()
@@ -50,6 +54,11 @@ typedef struct
     /* for 16-byte alignment */
     uint8_t padding[12];
 } x264_cabac_t;
+
+typedef struct
+{
+    CABAC_COMMON
+} x264_vp8rac_t;
 
 extern const uint8_t x264_cabac_transition[128][2];
 extern const uint16_t x264_cabac_entropy[128];
@@ -69,13 +78,14 @@ void x264_cabac_encode_ue_bypass( x264_cabac_t *cb, int exp_bits, int val );
 void x264_cabac_encode_flush( x264_t *h, x264_cabac_t *cb );
 
 /* VP8 stuff */
-void x264_vp8rac_encode_init_core( x264_cabac_t *cb );
-void x264_vp8rac_encode_init( x264_cabac_t *cb, uint8_t *p_data, uint8_t *p_end );
-void x264_vp8rac_encode_decision( x264_cabac_t *cb, int prob, int b );
-void x264_vp8rac_encode_bypass( x264_cabac_t *cb, int b );
-void x264_vp8rac_encode_uint_bypass( x264_cabac_t *cb, int val, int bits );
-void x264_vp8rac_encode_sint_bypass( x264_cabac_t *cb, int val, int bits );
-#define x264_vp8rac_encode_flush x264_cabac_encode_flush
+void x264_vp8rac_encode_init_core( x264_vp8rac_t *cb );
+void x264_vp8rac_encode_init( x264_vp8rac_t *cb, uint8_t *p_data, uint8_t *p_end );
+void x264_vp8rac_encode_decision( x264_vp8rac_t *cb, int prob, int b );
+void x264_vp8rac_encode_bypass( x264_vp8rac_t *cb, int b );
+void x264_vp8rac_encode_uint_bypass( x264_vp8rac_t *cb, int val, int bits );
+void x264_vp8rac_encode_sint_bypass( x264_vp8rac_t *cb, int val, int bits );
+#define x264_vp8rac_encode_flush( h, cb ) x264_cabac_encode_flush( (h), (x264_cabac_t *)(cb) )
+#define x264_vp8rac_pos( cb ) x264_cabac_pos( (x264_cabac_t *)(cb) )
 
 #define NUM_DCT_TOKENS 12
 extern const uint8_t x264_vp8_dct_update_probs[4][8][3][NUM_DCT_TOKENS-1];

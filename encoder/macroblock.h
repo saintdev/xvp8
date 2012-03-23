@@ -48,7 +48,7 @@ void x264_predict_lossless_chroma( x264_t *h, int i_mode );
 
 void x264_macroblock_encode      ( x264_t *h );
 void x264_macroblock_write_cabac ( x264_t *h, x264_cabac_t *cb );
-void x264_macroblock_write_vp8rac( x264_t *h, x264_cabac_t *cb );
+void x264_macroblock_write_vp8rac( x264_t *h, x264_vp8rac_t *cb );
 void x264_macroblock_write_cavlc ( x264_t *h );
 
 void x264_macroblock_encode_p8x8( x264_t *h, int i8 );
