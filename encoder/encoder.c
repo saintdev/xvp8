@@ -2537,9 +2537,14 @@ reencode:
     if( h->param.b_vp8 )
     {
         x264_vp8rac_encode_flush( h, &h->vp8.header_rac );
-
-        int header_size = (h->vp8.header_rac.p - h->out.bs.p) << 5;
+        uint8_t *start = h->out.bs.p;
         h->out.bs.p = h->vp8.header_rac.p;
+
+        /* Only write this on the first keyframe if !b_repeat_headers ? */
+        if( h->fenc->b_keyframe )
+            x264_sei_version_write( h, &h->out.bs );
+
+        int header_size = (h->out.bs.p - start) << 5;
 
         x264_vp8rac_t *cp = &h->vp8.coeff_partitions[0];
         x264_vp8rac_encode_flush( h, cp );
