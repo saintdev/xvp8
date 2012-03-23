@@ -33,7 +33,7 @@ void x264_vp8_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh )
     int header_byte = (!keyframe               << 0)
                     + (0 /* regular profile */ << 1)
                     + (1 /* not invisible */   << 4);
-    uint8_t *header_ptr = s->p;
+    h->vp8.header_ptr = s->p;
     /* We go back and fix this later. */
     int header_size = 0;
     int header = (header_size << 5) + header_byte;
@@ -55,7 +55,7 @@ void x264_vp8_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh )
     }
     bs_flush( s );
 
-    x264_cabac_t *cb = &h->cabac;
+    x264_vp8rac_t *cb = &h->vp8.header_rac;
     x264_vp8rac_encode_init( cb, s->p, s->p_end );
     if( keyframe )
     {
@@ -104,10 +104,4 @@ void x264_vp8_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh )
     {
         /* MV and mode updates here, we'll deal with them later. */
     }
-    x264_vp8rac_encode_flush( h, cb );
-    s->p = cb->p;
-    header_size = (s->p - header_ptr) << 5;
-    header_ptr[0] |= (header_size>>0)&0xff;
-    header_ptr[1] |= (header_size>>8)&0xff;
-    header_ptr[2] |= (header_size>>16);
 }

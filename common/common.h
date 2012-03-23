@@ -941,6 +941,17 @@ struct x264_t
     struct visualize_t *visualize;
 #endif
     x264_lookahead_t *lookahead;
+
+    /* VP8 specific */
+    struct {
+        /* pointer to the place in the bitstream where the header size is stored */
+        uint8_t *header_ptr;
+
+        /* header rac, includes mb modes and motion vectors */
+        x264_vp8rac_t header_rac;
+        /* single partition only for now */
+        x264_vp8rac_t coeff_partitions[1];
+    } vp8;
 };
 
 // included at the end because it needs x264_t

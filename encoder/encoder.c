@@ -356,25 +356,35 @@ static void x264_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh
 
 /* If we are within a reasonable distance of the end of the memory allocated for the bitstream, */
 /* reallocate, adding an arbitrary amount of space. */
-static int x264_bitstream_check_buffer( x264_t *h )
+static int x264_bitstream_check_buffer( x264_t *h, void *c )
 {
+    x264_cabac_t *cb = c;
     uint8_t *bs_bak = h->out.p_bitstream;
     int max_row_size = (2500 << SLICE_MBAFF) * h->mb.i_mb_width;
-    if( (h->param.b_cabac && (h->cabac.p_end - h->cabac.p < max_row_size)) ||
+    if( (h->param.b_cabac && (cb->p_end - cb->p < max_row_size)) ||
         (h->out.bs.p_end - h->out.bs.p < max_row_size) )
     {
         h->out.i_bitstream += max_row_size;
         CHECKED_MALLOC( h->out.p_bitstream, h->out.i_bitstream );
         h->mc.memcpy_aligned( h->out.p_bitstream, bs_bak, (h->out.i_bitstream - max_row_size) & ~15 );
         intptr_t delta = h->out.p_bitstream - bs_bak;
+        uint8_t *end = h->out.p_bitstream + h->out.i_bitstream;
 
         h->out.bs.p_start += delta;
         h->out.bs.p += delta;
-        h->out.bs.p_end = h->out.p_bitstream + h->out.i_bitstream;
+        h->out.bs.p_end = end;
 
         h->cabac.p_start += delta;
         h->cabac.p += delta;
-        h->cabac.p_end = h->out.p_bitstream + h->out.i_bitstream;
+        h->cabac.p_end = end;
+
+        h->vp8.header_rac.p_start += delta;
+        h->vp8.header_rac.p += delta;
+        h->vp8.header_rac.p_end = end;
+
+        h->vp8.coeff_partitions[0].p_start += delta;
+        h->vp8.coeff_partitions[0].p += delta;
+        h->vp8.coeff_partitions[0].p_end = end;
 
         for( int i = 0; i <= h->out.i_nal; i++ )
             h->out.nal[i].p_payload += delta;
@@ -2251,8 +2261,10 @@ static int x264_slice_write( x264_t *h )
     x264_slice_header_write( h, &h->out.bs, &h->sh, h->i_nal_ref_idc );
     if( h->param.b_vp8 )
     {
-        x264_vp8rac_encode_init( &h->cabac, h->out.bs.p, h->out.bs.p_end );
-        last_emu_check = h->cabac.p;
+        /* TODO: 50 is a guess, position this more intelligently in the bitstream.
+         * Give coefficient partitions their own bitstream?
+         */
+        x264_vp8rac_encode_init( &h->vp8.coeff_partitions[0], h->out.bs.p + 50 * h->mb.i_mb_count, h->out.bs.p_end );
     }
     else if( h->param.b_cabac )
     {
@@ -2281,8 +2293,15 @@ static int x264_slice_write( x264_t *h )
 
         if( i_mb_x == 0 )
         {
-            if( x264_bitstream_check_buffer( h ) )
-                return -1;
+            if( h->param.b_vp8 )
+            {
+                if( x264_bitstream_check_buffer( h, &h->vp8.header_rac ) )
+                    return -1;
+                if( x264_bitstream_check_buffer( h, &h->vp8.coeff_partitions[0] ) )
+                    return -1;
+            }
+            else if( x264_bitstream_check_buffer( h, &h->cabac ) )
+                    return -1;
             if( !(i_mb_y & SLICE_MBAFF) && h->param.rc.i_vbv_buffer_size )
                 x264_bitstream_backup( h, &bs_bak[1], i_skip, 1 );
             if( !h->mb.b_reencode_mb )
@@ -2322,7 +2341,7 @@ reencode:
 
         if( h->param.b_vp8 )
         {
-            x264_macroblock_write_vp8rac( h, &h->cabac );
+            x264_macroblock_write_vp8rac( h, &h->vp8.coeff_partitions[0] );
         }
         else if( h->param.b_cabac )
         {
@@ -2517,8 +2536,19 @@ reencode:
 
     if( h->param.b_vp8 )
     {
-        x264_vp8rac_encode_flush( h, &h->cabac );
-        h->out.bs.p = h->cabac.p;
+        x264_vp8rac_encode_flush( h, &h->vp8.header_rac );
+
+        int header_size = (h->vp8.header_rac.p - h->out.bs.p) << 5;
+        h->out.bs.p = h->vp8.header_rac.p;
+
+        x264_vp8rac_t *cp = &h->vp8.coeff_partitions[0];
+        x264_vp8rac_encode_flush( h, cp );
+        memmove(h->out.bs.p, cp->p_start, cp->p - cp->p_start );
+        h->out.bs.p += cp->p - cp->p_start;
+
+        h->vp8.header_ptr[0] |= (header_size>>0)&0xff;
+        h->vp8.header_ptr[1] |= (header_size>>8)&0xff;
+        h->vp8.header_ptr[2] |= (header_size>>16);
     }
     else if( h->param.b_cabac )
     {
