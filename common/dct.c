@@ -526,11 +526,47 @@ static void add16x16_idct_dc( pixel *p_dst, dctcoef dct[16] )
     }
 }
 
+/* From libvpx */
+static void vp8_sub4x4_dct( dctcoef dct[16], pixel *pix1, pixel *pix2 )
+{
+    dctcoef d[16];
+    dctcoef tmp[16];
+
+    pixel_sub_wxh( d, 4, pix1, FENC_STRIDE, pix2, FDEC_STRIDE );
+
+    for( int i = 0; i < 4; i++ )
+    {
+        int a1 = ((d[i*4+0] + d[i*4+3])<<3);
+        int b1 = ((d[i*4+1] + d[i*4+2])<<3);
+        int c1 = ((d[i*4+1] - d[i*4+2])<<3);
+        int d1 = ((d[i*4+0] - d[i*4+3])<<3);
+
+        tmp[i*4+0] = a1 + b1;
+        tmp[i*4+2] = a1 - b1;
+
+        tmp[i*4+1] = (c1 * 2217 + d1 * 5352 + 14500)>>12;
+        tmp[i*4+3] = (d1 * 2217 - c1 * 5352 +  7500)>>12;
+    }
+
+    for( int i = 0; i < 4; i++ )
+    {
+        int a1 = tmp[0*4+i] + tmp[3*4+i];
+        int b1 = tmp[1*4+i] + tmp[2*4+i];
+        int c1 = tmp[1*4+i] - tmp[2*4+i];
+        int d1 = tmp[0*4+i] - tmp[3*4+i];
+
+        dct[0*4+i] = (a1 + b1 + 7)>>4;
+        dct[2*4+i] = (a1 - b1 + 7)>>4;
+
+        dct[1*4+i] =((c1 * 2217 + d1 * 5352 +  12000)>>16) + (!!d1);
+        dct[3*4+i] = (d1 * 2217 - c1 * 5352 +  51000)>>16;
+    }
+}
 
 /****************************************************************************
  * x264_dct_init:
  ****************************************************************************/
-void x264_dct_init( int cpu, x264_dct_function_t *dctf )
+void x264_dct_init( x264_t *h, int cpu, x264_dct_function_t *dctf )
 {
     dctf->sub4x4_dct    = sub4x4_dct;
     dctf->add4x4_idct   = add4x4_idct;
@@ -726,6 +762,9 @@ void x264_dct_init( int cpu, x264_dct_function_t *dctf )
     }
 #endif
 #endif // HIGH_BIT_DEPTH
+
+    if( h->param.b_vp8 )
+        dctf->sub4x4_dct    = vp8_sub4x4_dct;
 }
 
 
