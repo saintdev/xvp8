@@ -563,6 +563,52 @@ static void vp8_sub4x4_dct( dctcoef dct[16], pixel *pix1, pixel *pix2 )
     }
 }
 
+static void vp8_add4x4_idct( pixel *dst, dctcoef dct[16] )
+{
+    dctcoef d[16];
+    dctcoef tmp[16];
+
+    for( int i = 0; i < 4; i++ )
+    {
+        int a1 = dct[0*4+i] + dct[2*4+i];
+        int b1 = dct[0*4+i] - dct[2*4+i];
+        int t1 = (dct[1*4+i] * 35468) >> 16;
+        int t2 = dct[3*4+i] + ((dct[3*4+i] * 20091) >> 16);
+        int c1 = t1 - t2;
+        int t3 = dct[1*4+i] + ((dct[1*4+i] * 20091) >> 16);
+        int t4 = (dct[3*4+i] * 35468) >> 16;
+        int d1 = t3 + t4;
+        tmp[0*4+i] = a1 + d1;
+        tmp[3*4+i] = a1 - d1;
+        tmp[1*4+i] = b1 + c1;
+        tmp[2*4+i] = b1 - c1;
+    }
+
+    for( int i = 0; i < 4; i++ )
+    {
+        int a1 = tmp[0+i*4] + tmp[2+i*4];
+        int b1 = tmp[0+i*4] - tmp[2+i*4];
+        int t1 = (tmp[1+i*4] * 35468) >> 16;
+        int t2 = tmp[3+i*4] + ((tmp[3+i*4] * 20091) >> 16);
+        int c1 = t1 - t2;
+        int t3 = tmp[1+i*4] + ((tmp[1+i*4] * 20091) >> 16);
+        int t4 = (tmp[3+i*4] * 35468) >> 16;
+        int d1 = t3 + t4;
+        d[0+i*4] = (a1 + d1 + 4) >> 3;
+        d[3+i*4] = (a1 - d1 + 4) >> 3;
+        d[1+i*4] = (b1 + c1 + 4) >> 3;
+        d[2+i*4] = (b1 - c1 + 4) >> 3;
+    }
+
+
+    for( int y = 0; y < 4; y++ )
+    {
+        for( int x = 0; x < 4; x++ )
+            dst[x] = x264_clip_pixel( dst[x] + d[y*4+x] );
+        dst += FDEC_STRIDE;
+    }
+}
+
 /****************************************************************************
  * x264_dct_init:
  ****************************************************************************/
@@ -764,7 +810,10 @@ void x264_dct_init( x264_t *h, int cpu, x264_dct_function_t *dctf )
 #endif // HIGH_BIT_DEPTH
 
     if( h->param.b_vp8 )
+    {
         dctf->sub4x4_dct    = vp8_sub4x4_dct;
+        dctf->add4x4_idct   = vp8_add4x4_idct;
+    }
 }
 
 
