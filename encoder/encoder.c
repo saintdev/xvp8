@@ -1230,7 +1230,7 @@ x264_t *x264_encoder_open( x264_param_t *param )
     x264_rdo_init();
 
     /* init CPU functions */
-    x264_predict_16x16_init( h->param.cpu, h->predict_16x16 );
+    x264_predict_16x16_init( h, h->param.cpu, h->predict_16x16 );
     x264_predict_8x8c_init( h->param.cpu, h->predict_8x8c );
     x264_predict_8x16c_init( h->param.cpu, h->predict_8x16c );
     x264_predict_8x8_init( h->param.cpu, h->predict_8x8, &h->predict_8x8_filter );

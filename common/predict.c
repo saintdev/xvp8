@@ -150,6 +150,35 @@ void x264_predict_16x16_p_c( pixel *src )
     }
 }
 
+static void x264_vp8_predict_16x16_tm_c( pixel *src )
+{
+    int topleft = src[-1-FDEC_STRIDE];
+    pixel *top = src-FDEC_STRIDE;
+    pixel *left = src-1;
+
+    for( int y = 0; y < 16; y++ )
+    {
+        int pred = *left - topleft;
+        src[ 0] = x264_clip_pixel( top[ 0] + pred );
+        src[ 1] = x264_clip_pixel( top[ 1] + pred );
+        src[ 2] = x264_clip_pixel( top[ 2] + pred );
+        src[ 3] = x264_clip_pixel( top[ 3] + pred );
+        src[ 4] = x264_clip_pixel( top[ 4] + pred );
+        src[ 5] = x264_clip_pixel( top[ 5] + pred );
+        src[ 6] = x264_clip_pixel( top[ 6] + pred );
+        src[ 7] = x264_clip_pixel( top[ 7] + pred );
+        src[ 8] = x264_clip_pixel( top[ 8] + pred );
+        src[ 9] = x264_clip_pixel( top[ 9] + pred );
+        src[10] = x264_clip_pixel( top[10] + pred );
+        src[11] = x264_clip_pixel( top[11] + pred );
+        src[12] = x264_clip_pixel( top[12] + pred );
+        src[13] = x264_clip_pixel( top[13] + pred );
+        src[14] = x264_clip_pixel( top[14] + pred );
+        src[15] = x264_clip_pixel( top[15] + pred );
+        src += FDEC_STRIDE;
+        left += FDEC_STRIDE;
+    }
+}
 
 /****************************************************************************
  * 8x8 prediction for intra chroma block (4:2:0)
@@ -877,7 +906,7 @@ static void x264_predict_8x8_hu_c( pixel *src, pixel edge[36] )
 /****************************************************************************
  * Exported functions:
  ****************************************************************************/
-void x264_predict_16x16_init( int cpu, x264_predict_t pf[7] )
+void x264_predict_16x16_init( x264_t *h, int cpu, x264_predict_t pf[7] )
 {
     pf[I_PRED_16x16_V ]     = x264_predict_16x16_v_c;
     pf[I_PRED_16x16_H ]     = x264_predict_16x16_h_c;
@@ -899,6 +928,9 @@ void x264_predict_16x16_init( int cpu, x264_predict_t pf[7] )
 #if HAVE_ARMV6
     x264_predict_16x16_init_arm( cpu, pf );
 #endif
+
+    if( h->param.b_vp8 )
+        pf[I_PRED_16x16_P ] = x264_vp8_predict_16x16_tm_c;
 }
 
 void x264_predict_8x8c_init( int cpu, x264_predict_t pf[7] )
