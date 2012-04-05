@@ -563,6 +563,41 @@ static void vp8_sub4x4_dct( dctcoef dct[16], pixel *pix1, pixel *pix2 )
     }
 }
 
+void vp8_dct4x4dc( dctcoef d[16] )
+{
+    dctcoef tmp[16];
+
+    for( int i = 0; i < 4; i++ )
+    {
+        int a1 = (d[i*4+0] + d[i*4+2])<<2;
+        int d1 = (d[i*4+1] + d[i*4+3])<<2;
+        int c1 = (d[i*4+1] - d[i*4+3])<<2;
+        int b1 = (d[i*4+0] - d[i*4+2])<<2;
+
+        tmp[i*4+0] = a1 + d1 + !!a1;
+        tmp[i*4+1] = b1 + c1;
+        tmp[i*4+2] = b1 - c1;
+        tmp[i*4+3] = a1 - d1;
+    }
+
+    for( int i = 0; i < 4; i++ )
+    {
+        int a1 = tmp[0*4+i] + tmp[2*4+i];
+        int d1 = tmp[1*4+i] + tmp[3*4+i];
+        int c1 = tmp[1*4+i] - tmp[3*4+i];
+        int b1 = tmp[0*4+i] - tmp[2*4+i];
+        int a2 = a1 + d1;
+        int b2 = b1 + c1;
+        int c2 = b1 - c1;
+        int d2 = a1 - d1;
+
+        d[0*4+i] = (a2-(a2>>31)+3) >> 3;
+        d[1*4+i] = (b2-(b2>>31)+3) >> 3;
+        d[2*4+i] = (c2-(c2>>31)+3) >> 3;
+        d[3*4+i] = (d2-(d2>>31)+3) >> 3;
+    }
+}
+
 static void vp8_add4x4_idct( pixel *dst, dctcoef dct[16] )
 {
     dctcoef d[16];
@@ -813,6 +848,7 @@ void x264_dct_init( x264_t *h, int cpu, x264_dct_function_t *dctf )
     {
         dctf->sub4x4_dct    = vp8_sub4x4_dct;
         dctf->add4x4_idct   = vp8_add4x4_idct;
+        dctf->dct4x4dc      = vp8_dct4x4dc;
     }
 }
 
