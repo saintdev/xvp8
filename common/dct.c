@@ -644,6 +644,37 @@ static void vp8_add4x4_idct( pixel *dst, dctcoef dct[16] )
     }
 }
 
+static void vp8_idct4x4dc( dctcoef d[16] )
+{
+    dctcoef tmp[16];
+
+    for( int i = 0; i < 4; i++ )
+    {
+        int a1 = d[0*4+i] + d[3*4+i];
+        int b1 = d[1*4+i] + d[2*4+i];
+        int c1 = d[1*4+i] - d[2*4+i];
+        int d1 = d[0*4+i] - d[3*4+i];
+
+        tmp[0*4+i] = a1 + b1;
+        tmp[1*4+i] = c1 + d1;
+        tmp[2*4+i] = a1 - b1;
+        tmp[3*4+i] = d1 - c1;
+    }
+
+    for( int i = 0; i < 4; i++ )
+    {
+        int a1 = tmp[0+i*4] + tmp[3+i*4];
+        int b1 = tmp[1+i*4] + tmp[2+i*4];
+        int c1 = tmp[1+i*4] - tmp[2+i*4];
+        int d1 = tmp[0+i*4] - tmp[3+i*4];
+
+        d[0+i*4] = (a1 + b1 + 3) >> 3;
+        d[1+i*4] = (c1 + d1 + 3) >> 3;
+        d[2+i*4] = (a1 - b1 + 3) >> 3;
+        d[3+i*4] = (d1 - c1 + 3) >> 3;
+    }
+}
+
 /****************************************************************************
  * x264_dct_init:
  ****************************************************************************/
@@ -849,6 +880,7 @@ void x264_dct_init( x264_t *h, int cpu, x264_dct_function_t *dctf )
         dctf->sub4x4_dct    = vp8_sub4x4_dct;
         dctf->add4x4_idct   = vp8_add4x4_idct;
         dctf->dct4x4dc      = vp8_dct4x4dc;
+        dctf->idct4x4dc     = vp8_idct4x4dc;
     }
 }
 
