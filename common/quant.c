@@ -81,6 +81,15 @@ static int quant_2x2_dc( dctcoef dct[4], int mf, int bias )
     return !!nz;
 }
 
+static int vp8_quant_4x4( dctcoef dct[16], udctcoef mf[2], udctcoef bias[2] )
+{
+    int nz = 0;
+    QUANT_ONE( dct[0], mf[0], bias[0] );
+    for(int i = 1; i < 16; i++ )
+        QUANT_ONE( dct[i], mf[1], bias[1] );
+    return !!nz;
+}
+
 #define DEQUANT_SHL( x ) \
     dct[x] = ( dct[x] * dequant_mf[i_mf][x] ) << i_qbits
 
@@ -140,6 +149,13 @@ static void dequant_4x4_dc( dctcoef dct[16], int dequant_mf[6][16], int i_qp )
         for( int i = 0; i < 16; i++ )
             dct[i] = ( dct[i] * i_dmf + f ) >> (-i_qbits);
     }
+}
+
+static void vp8_dequant_4x4( dctcoef dct[16], int dequant_mf[2] )
+{
+    dct[0] *= dequant_mf[0];
+    for( int i = 1; i < 16; i++ )
+        dct[i] *= dequant_mf[1];
 }
 
 #define IDCT_DEQUANT_2X4_START \
@@ -408,9 +424,13 @@ void x264_quant_init( x264_t *h, int cpu, x264_quant_function_t *pf )
     pf->quant_4x4_dc = quant_4x4_dc;
     pf->quant_2x2_dc = quant_2x2_dc;
 
+    pf->vp8quant_4x4 = vp8_quant_4x4;
+
     pf->dequant_4x4 = dequant_4x4;
     pf->dequant_4x4_dc = dequant_4x4_dc;
     pf->dequant_8x8 = dequant_8x8;
+
+    pf->vp8dequant_4x4 = vp8_dequant_4x4;
 
     pf->idct_dequant_2x4_dc = idct_dequant_2x4_dc;
     pf->idct_dequant_2x4_dconly = idct_dequant_2x4_dconly;

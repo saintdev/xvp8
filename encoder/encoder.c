@@ -1171,6 +1171,8 @@ x264_t *x264_encoder_open( x264_param_t *param )
 
     if( x264_cqm_init( h ) < 0 )
         goto fail;
+    if( x264_vp8_cqm_init( h ) < 0 )
+        goto fail;
 
     h->mb.i_mb_width = h->sps->i_mb_width;
     h->mb.i_mb_height = h->sps->i_mb_height;
@@ -3825,6 +3827,7 @@ void    x264_encoder_close  ( x264_t *h )
         free( h->param.rc.psz_stat_in );
 
     x264_cqm_delete( h );
+    x264_vp8_cqm_delete( h );
     x264_free( h->nal_buffer );
     x264_analyse_free_costs( h );
 
