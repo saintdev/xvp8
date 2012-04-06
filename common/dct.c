@@ -563,6 +563,22 @@ static void vp8_sub4x4_dct( dctcoef dct[16], pixel *pix1, pixel *pix2 )
     }
 }
 
+static void vp8_sub8x8_dct( dctcoef dct[4][16], pixel *pix1, pixel *pix2 )
+{
+    vp8_sub4x4_dct( dct[0], &pix1[0], &pix2[0] );
+    vp8_sub4x4_dct( dct[1], &pix1[4], &pix2[4] );
+    vp8_sub4x4_dct( dct[2], &pix1[4*FENC_STRIDE+0], &pix2[4*FDEC_STRIDE+0] );
+    vp8_sub4x4_dct( dct[3], &pix1[4*FENC_STRIDE+4], &pix2[4*FDEC_STRIDE+4] );
+}
+
+static void vp8_sub16x16_dct( dctcoef dct[16][16], pixel *pix1, pixel *pix2 )
+{
+    vp8_sub8x8_dct( &dct[ 0], &pix1[0], &pix2[0] );
+    vp8_sub8x8_dct( &dct[ 4], &pix1[8], &pix2[8] );
+    vp8_sub8x8_dct( &dct[ 8], &pix1[8*FENC_STRIDE+0], &pix2[8*FDEC_STRIDE+0] );
+    vp8_sub8x8_dct( &dct[12], &pix1[8*FENC_STRIDE+8], &pix2[8*FDEC_STRIDE+8] );
+}
+
 void vp8_dct4x4dc( dctcoef d[16] )
 {
     dctcoef tmp[16];
@@ -642,6 +658,22 @@ static void vp8_add4x4_idct( pixel *dst, dctcoef dct[16] )
             dst[x] = x264_clip_pixel( dst[x] + d[y*4+x] );
         dst += FDEC_STRIDE;
     }
+}
+
+static void vp8_add8x8_idct( pixel *p_dst, dctcoef dct[4][16] )
+{
+    vp8_add4x4_idct( &p_dst[0],               dct[0] );
+    vp8_add4x4_idct( &p_dst[4],               dct[1] );
+    vp8_add4x4_idct( &p_dst[4*FDEC_STRIDE+0], dct[2] );
+    vp8_add4x4_idct( &p_dst[4*FDEC_STRIDE+4], dct[3] );
+}
+
+static void vp8_add16x16_idct( pixel *p_dst, dctcoef dct[16][16] )
+{
+    vp8_add8x8_idct( &p_dst[0],               &dct[0] );
+    vp8_add8x8_idct( &p_dst[8],               &dct[4] );
+    vp8_add8x8_idct( &p_dst[8*FDEC_STRIDE+0], &dct[8] );
+    vp8_add8x8_idct( &p_dst[8*FDEC_STRIDE+8], &dct[12] );
 }
 
 static void vp8_idct4x4dc( dctcoef d[16] )
@@ -879,6 +911,10 @@ void x264_dct_init( x264_t *h, int cpu, x264_dct_function_t *dctf )
     {
         dctf->sub4x4_dct    = vp8_sub4x4_dct;
         dctf->add4x4_idct   = vp8_add4x4_idct;
+        dctf->sub8x8_dct    = vp8_sub8x8_dct;
+        dctf->add8x8_idct   = vp8_add8x8_idct;
+        dctf->sub16x16_dct  = vp8_sub16x16_dct;
+        dctf->add16x16_idct = vp8_add16x16_idct;
         dctf->dct4x4dc      = vp8_dct4x4dc;
         dctf->idct4x4dc     = vp8_idct4x4dc;
     }
