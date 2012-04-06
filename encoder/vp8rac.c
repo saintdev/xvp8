@@ -3,8 +3,7 @@
  *****************************************************************************
  * Copyright (C) 2003-2012 x264 project
  *
- * Authors: Laurent Aimar <fenrir@via.ecp.fr>
- *          Loren Merritt <lorenm@u.washington.edu>
+ * Authors: Nathan Caldwell <saintdev@gmail.com>
  *          Jason Garrett-Glaser <darkshikari@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
