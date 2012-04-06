@@ -49,7 +49,7 @@ static const uint8_t *const dct_cat_probs[] =
 static const uint8_t dct_cat_bits[] = { 1, 2, 3, 4, 5, 11 };
 
 /* Write a single DCT coefficient */
-static ALWAYS_INLINE void x264_vp8rac_block_residual_coeff( x264_t *h, x264_vp8rac_t *rc, uint8_t prob[NUM_DCT_TOKENS-1], dctcoef abs_coeff, int sign )
+static ALWAYS_INLINE void x264_vp8rac_block_residual_coeff( x264_t *h, x264_vp8rac_t *rc, const uint8_t prob[NUM_DCT_TOKENS-1], dctcoef abs_coeff, int sign )
 {
     x264_vp8rac_encode_decision( rc, prob[1], 1 );  // !DCT_0
     if( abs_coeff > 1 )
@@ -103,7 +103,7 @@ static ALWAYS_INLINE void x264_vp8rac_block_residual_coeff( x264_t *h, x264_vp8r
     x264_vp8rac_encode_bypass( rc, sign );
 }
 
-static ALWAYS_INLINE void x264_vp8rac_block_residual( x264_t *h, x264_vp8rac_t *rc, uint8_t probs[8][3][NUM_DCT_TOKENS-1], dctcoef *l, int nnz_pred, int ac_luma )
+static ALWAYS_INLINE void x264_vp8rac_block_residual( x264_t *h, x264_vp8rac_t *rc, const uint8_t probs[8][3][NUM_DCT_TOKENS-1], dctcoef *l, int nnz_pred, int ac_luma )
 {
     int zeros = 0;
 
@@ -133,7 +133,7 @@ static ALWAYS_INLINE void x264_vp8rac_block_residual( x264_t *h, x264_vp8rac_t *
         x264_vp8rac_encode_decision( rc, probs[x264_vp8_coeff_band[16-zeros]][nnz_pred][0], 0 );  // EOB
 }
 
-static ALWAYS_INLINE void x264_vp8rac_block_residual_cbf_internal( x264_t *h, x264_vp8rac_t *rc, uint8_t probs[8][3][NUM_DCT_TOKENS-1], int idx, dctcoef *l, int nnz_pred, int ac_luma )
+static ALWAYS_INLINE void x264_vp8rac_block_residual_cbf_internal( x264_t *h, x264_vp8rac_t *rc, const uint8_t probs[8][3][NUM_DCT_TOKENS-1], int idx, dctcoef *l, int nnz_pred, int ac_luma )
 {
     if( h->mb.cache.non_zero_count[idx] )
         x264_vp8rac_block_residual( h, rc, probs, l, nnz_pred, ac_luma );
