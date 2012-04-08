@@ -2339,7 +2339,10 @@ static int x264_slice_write( x264_t *h )
 
         /* encode this macroblock -> be careful it can change the mb type to P_SKIP if needed */
 reencode:
-        x264_macroblock_encode( h );
+        if( h->param.b_vp8 )
+            x264_vp8_macroblock_encode( h );
+        else
+            x264_macroblock_encode( h );
 
         if( h->param.b_vp8 )
         {
