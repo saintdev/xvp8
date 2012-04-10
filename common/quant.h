@@ -34,9 +34,13 @@ typedef struct
     int (*quant_4x4_dc)( dctcoef dct[16], int mf, int bias );
     int (*quant_2x2_dc)( dctcoef dct[4], int mf, int bias );
 
+    int (*vp8quant_4x4)( dctcoef dct[16], udctcoef mf[2], udctcoef bias[2] );
+
     void (*dequant_8x8)( dctcoef dct[64], int dequant_mf[6][64], int i_qp );
     void (*dequant_4x4)( dctcoef dct[16], int dequant_mf[6][16], int i_qp );
     void (*dequant_4x4_dc)( dctcoef dct[16], int dequant_mf[6][16], int i_qp );
+
+    void (*vp8dequant_4x4)( dctcoef dct[16], int dequant_mf[2] );
 
     void (*idct_dequant_2x4_dc)( dctcoef dct[8], dctcoef dct4x4[8][16], int dequant_mf[6][16], int i_qp );
     void (*idct_dequant_2x4_dconly)( dctcoef dct[8], int dequant_mf[6][16], int i_qp );

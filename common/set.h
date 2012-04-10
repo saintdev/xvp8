@@ -253,4 +253,8 @@ int  x264_cqm_init( x264_t *h );
 void x264_cqm_delete( x264_t *h );
 int  x264_cqm_parse_file( x264_t *h, const char *filename );
 
+/* VP8 */
+int  x264_vp8_cqm_init( x264_t *h );
+void x264_vp8_cqm_delete( x264_t *h );
+
 #endif

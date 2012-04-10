@@ -62,6 +62,7 @@ do {\
 #define QP_MAX_SPEC (51+QP_BD_OFFSET)
 #define QP_MAX (QP_MAX_SPEC+18)
 #define QP_MAX_MAX (51+2*6+18)
+#define VP8_QP_MAX 127
 #define PIXEL_MAX ((1 << BIT_DEPTH)-1)
 // arbitrary, but low because SATD scores are 1/4 normal
 #define X264_LOOKAHEAD_QP (12+QP_BD_OFFSET)
@@ -533,6 +534,11 @@ struct x264_t
     udctcoef        (*quant4_bias0[4])[16];  /* [4][52][16] */
     udctcoef        (*quant8_bias0[4])[64];  /* [4][52][64] */
     udctcoef        (*nr_offset_emergency)[4][64];
+
+    /* quantization matrix for vp8, [luma_dc,luma_ac,chroma][qp][dc/ac coeff] */
+    int             (*vp8dequant_mf[3])[2];  /* [3][128][2] */
+    udctcoef        (*vp8quant_mf[3])[2];    /* [3][128][2] */
+    udctcoef        (*vp8quant_bias[3])[2];  /* [3][128][2] */
 
     /* mv/ref cost arrays. */
     uint16_t *cost_mv[QP_MAX+1];
