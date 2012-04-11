@@ -55,7 +55,7 @@ static void x264_vp8_mb_encode_i16x16( x264_t *h, int i_qp )
         h->mb.cache.non_zero_count[x264_raster8[i]] = nz;
         if( nz )
         {
-            memcpy( h->dct.luma4x4[i], dct4x4[i], 16*sizeof(dctcoef) );
+            h->zigzagf.scan_4x4( h->dct.luma4x4[i], dct4x4[i] );
             h->quantf.vp8dequant_4x4( dct4x4[i], h->vp8dequant_mf[1][i_qp] );
             block_cbp = 0xf;
         }
@@ -69,7 +69,7 @@ static void x264_vp8_mb_encode_i16x16( x264_t *h, int i_qp )
     h->mb.cache.non_zero_count[x264_scan8[LUMA_DC]] = nz;
     if( nz )
     {
-        memcpy( h->dct.luma16x16_dc[0], dct_dc4x4, 16*sizeof(dctcoef) );
+        h->zigzagf.scan_4x4( h->dct.luma16x16_dc[0], dct_dc4x4 );
 
         h->quantf.vp8dequant_4x4( dct_dc4x4, h->vp8dequant_mf[0][i_qp] );
 
@@ -112,7 +112,7 @@ static void x264_vp8_mb_encode_chroma( x264_t *h, int i_qp )
             if( nz )
             {
                 block_cbp = 1;
-                memcpy( h->dct.luma4x4[16+i+ch*16], dct4x4[i], 16*sizeof(dctcoef) );
+                h->zigzagf.scan_4x4( h->dct.luma4x4[16+i+ch*16], dct4x4[i] );
                 h->quantf.vp8dequant_4x4( dct4x4[i], h->vp8dequant_mf[2][i_qp] );
             }
         }
