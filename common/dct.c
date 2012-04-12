@@ -675,10 +675,10 @@ static void vp8_add16x16_idct( pixel *p_dst, dctcoef dct[16][16] )
 {
     for( int i = 0; i < 4; i++ )
     {
-        vp8_add4x4_idct( &p_dst[i*4*FDEC_STRIDE+0*4], &dct[i*4+0] );
-        vp8_add4x4_idct( &p_dst[i*4*FDEC_STRIDE+1*4], &dct[i*4+1] );
-        vp8_add4x4_idct( &p_dst[i*4*FDEC_STRIDE+2*4], &dct[i*4+2] );
-        vp8_add4x4_idct( &p_dst[i*4*FDEC_STRIDE+3*4], &dct[i*4+3] );
+        vp8_add4x4_idct( &p_dst[i*4*FDEC_STRIDE+0*4], dct[i*4+0] );
+        vp8_add4x4_idct( &p_dst[i*4*FDEC_STRIDE+1*4], dct[i*4+1] );
+        vp8_add4x4_idct( &p_dst[i*4*FDEC_STRIDE+2*4], dct[i*4+2] );
+        vp8_add4x4_idct( &p_dst[i*4*FDEC_STRIDE+3*4], dct[i*4+3] );
     }
 }
 
