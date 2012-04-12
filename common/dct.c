@@ -573,10 +573,13 @@ static void vp8_sub8x8_dct( dctcoef dct[4][16], pixel *pix1, pixel *pix2 )
 
 static void vp8_sub16x16_dct( dctcoef dct[16][16], pixel *pix1, pixel *pix2 )
 {
-    vp8_sub8x8_dct( &dct[ 0], &pix1[0], &pix2[0] );
-    vp8_sub8x8_dct( &dct[ 4], &pix1[8], &pix2[8] );
-    vp8_sub8x8_dct( &dct[ 8], &pix1[8*FENC_STRIDE+0], &pix2[8*FDEC_STRIDE+0] );
-    vp8_sub8x8_dct( &dct[12], &pix1[8*FENC_STRIDE+8], &pix2[8*FDEC_STRIDE+8] );
+    for( int i = 0; i < 4; i++ )
+    {
+        vp8_sub4x4_dct( dct[i*4+0], &pix1[i*4*FENC_STRIDE+0*4], &pix2[i*4*FDEC_STRIDE+0*4] );
+        vp8_sub4x4_dct( dct[i*4+1], &pix1[i*4*FENC_STRIDE+1*4], &pix2[i*4*FDEC_STRIDE+1*4] );
+        vp8_sub4x4_dct( dct[i*4+2], &pix1[i*4*FENC_STRIDE+2*4], &pix2[i*4*FDEC_STRIDE+2*4] );
+        vp8_sub4x4_dct( dct[i*4+3], &pix1[i*4*FENC_STRIDE+3*4], &pix2[i*4*FDEC_STRIDE+3*4] );
+    }
 }
 
 void vp8_dct4x4dc( dctcoef d[16] )
@@ -670,10 +673,13 @@ static void vp8_add8x8_idct( pixel *p_dst, dctcoef dct[4][16] )
 
 static void vp8_add16x16_idct( pixel *p_dst, dctcoef dct[16][16] )
 {
-    vp8_add8x8_idct( &p_dst[0],               &dct[0] );
-    vp8_add8x8_idct( &p_dst[8],               &dct[4] );
-    vp8_add8x8_idct( &p_dst[8*FDEC_STRIDE+0], &dct[8] );
-    vp8_add8x8_idct( &p_dst[8*FDEC_STRIDE+8], &dct[12] );
+    for( int i = 0; i < 4; i++ )
+    {
+        vp8_add4x4_idct( &p_dst[i*4*FDEC_STRIDE+0*4], &dct[i*4+0] );
+        vp8_add4x4_idct( &p_dst[i*4*FDEC_STRIDE+1*4], &dct[i*4+1] );
+        vp8_add4x4_idct( &p_dst[i*4*FDEC_STRIDE+2*4], &dct[i*4+2] );
+        vp8_add4x4_idct( &p_dst[i*4*FDEC_STRIDE+3*4], &dct[i*4+3] );
+    }
 }
 
 static void vp8_idct4x4dc( dctcoef d[16] )

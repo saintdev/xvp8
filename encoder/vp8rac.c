@@ -170,10 +170,13 @@ void x264_macroblock_write_vp8rac( x264_t *h, x264_vp8rac_t *partition_rac )
         else
         {
             int pred = x264_mb_pred_mode16x16_fix[h->mb.i_intra16x16_pred_mode];
+            int a = pred & 1;
+            int b = pred >> 1;
+
             /* i16x16 pred modes */
             x264_vp8rac_encode_decision( cb, 145, 1 );
-            x264_vp8rac_encode_decision( cb, 156, pred&1 );
-            x264_vp8rac_encode_decision( cb, (pred&1)?128:163, pred>>1 );
+            x264_vp8rac_encode_decision( cb, 156, a );
+            x264_vp8rac_encode_decision( cb, a?128:163, a?b:!b );
         }
 
         /* chroma pred mode */
