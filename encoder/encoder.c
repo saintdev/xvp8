@@ -3732,6 +3732,7 @@ void    x264_encoder_close  ( x264_t *h )
                   h->stat.i_mb_cbp[2] * 100.0 / (i_all_intra*csize),
                   h->stat.i_mb_cbp[4] * 100.0 / (i_all_intra*csize), buf );
 
+        char *pname = h->param.b_vp8 ? "tm" : "p";
         int64_t fixed_pred_modes[4][9] = {{0}};
         int64_t sum_pred_modes[4] = {0};
         for( int i = 0; i <= I_PRED_16x16_DC_128; i++ )
@@ -3740,7 +3741,7 @@ void    x264_encoder_close  ( x264_t *h )
             sum_pred_modes[0] += h->stat.i_mb_pred_mode[0][i];
         }
         if( sum_pred_modes[0] )
-            x264_log( h, X264_LOG_INFO, "i16 v,h,dc,p: %2.0f%% %2.0f%% %2.0f%% %2.0f%%\n",
+            x264_log( h, X264_LOG_INFO, "i16 v,h,dc,%s: %2.0f%% %2.0f%% %2.0f%% %2.0f%%\n", pname,
                       fixed_pred_modes[0][0] * 100.0 / sum_pred_modes[0],
                       fixed_pred_modes[0][1] * 100.0 / sum_pred_modes[0],
                       fixed_pred_modes[0][2] * 100.0 / sum_pred_modes[0],
@@ -3770,7 +3771,7 @@ void    x264_encoder_close  ( x264_t *h )
             sum_pred_modes[3] += h->stat.i_mb_pred_mode[3][i];
         }
         if( sum_pred_modes[3] && !CHROMA444 )
-            x264_log( h, X264_LOG_INFO, "i8c dc,h,v,p: %2.0f%% %2.0f%% %2.0f%% %2.0f%%\n",
+            x264_log( h, X264_LOG_INFO, "i8c dc,h,v,%s: %2.0f%% %2.0f%% %2.0f%% %2.0f%%\n", pname,
                       fixed_pred_modes[3][0] * 100.0 / sum_pred_modes[3],
                       fixed_pred_modes[3][1] * 100.0 / sum_pred_modes[3],
                       fixed_pred_modes[3][2] * 100.0 / sum_pred_modes[3],
