@@ -49,6 +49,8 @@ static const uint16_t x264_vp8_ac_dequant[VP8_QP_MAX+1] =
     213, 217, 221, 225, 229, 234, 239, 245, 249, 254, 259, 264, 269, 274, 279, 284,
 };
 
+#define DIV(n,d) (((n) + ((d)>>1)) / (d))
+
 int x264_vp8_cqm_init( x264_t *h )
 {
     for( int i = 0; i < 3; i++ )
@@ -65,6 +67,7 @@ int x264_vp8_cqm_init( x264_t *h )
 
         /* FIXME: Quantized coefficients are off by one if the coefficient is
          * an even multiple of the quantizer.
+         * FIXME: is this still true?
          */
         for( int j = 0; j < 3; j++ )
         {
@@ -76,10 +79,10 @@ int x264_vp8_cqm_init( x264_t *h )
 
         for( int j = 0; j < 3; j++ )
         {
-            h->vp8quant_mf[j][i][0] = dc = (1<<16) / h->vp8dequant_mf[j][i][0];
-            h->vp8quant_mf[j][i][1] = ac = (1<<16) / h->vp8dequant_mf[j][i][1];
-            h->vp8quant_bias[j][i][0] = (1<<15) / dc;
-            h->vp8quant_bias[j][i][1] = (1<<15) / ac;
+            h->vp8quant_mf[j][i][0] = dc = DIV( 1<<16, h->vp8dequant_mf[j][i][0] );
+            h->vp8quant_mf[j][i][1] = ac = DIV( 1<<16, h->vp8dequant_mf[j][i][1] );
+            h->vp8quant_bias[j][i][0] = DIV( 1<<15, dc );
+            h->vp8quant_bias[j][i][1] = DIV( 1<<15, ac );
         }
     }
 
