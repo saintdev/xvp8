@@ -552,8 +552,8 @@ static void vp8_sub4x4_dct( dctcoef dct[16], pixel *pix1, pixel *pix2 )
     {
         int a1 = tmp[i*4+0] + tmp[i*4+3];
         int b1 = tmp[i*4+1] + tmp[i*4+2];
-        int c1 = tmp[i*4+1] - tmp[i*4+3];
-        int d1 = tmp[i*4+0] - tmp[i*4+2];
+        int c1 = tmp[i*4+1] - tmp[i*4+2];
+        int d1 = tmp[i*4+0] - tmp[i*4+3];
 
         dct[i*4+0] = (a1 + b1 + 7)>>4;
         dct[i*4+2] = (a1 - b1 + 7)>>4;
