@@ -96,8 +96,8 @@ void x264_vp8_cqm_delete( x264_t *h )
 {
     for( int i = 0; i < 3; i++ )
     {
-        free( h->vp8quant_mf[i] );
-        free( h->vp8dequant_mf[i] );
-        free( h->vp8quant_bias[i] );
+        x264_free( h->vp8quant_mf[i] );
+        x264_free( h->vp8dequant_mf[i] );
+        x264_free( h->vp8quant_bias[i] );
     }
 }
