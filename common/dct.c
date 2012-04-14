@@ -1003,6 +1003,14 @@ static void zigzag_scan_4x4_field( dctcoef level[16], dctcoef dct[16] )
 }
 
 #undef ZIG
+#define ZIG(i,y,x) level[i] = dct[y*4+x];
+
+static void vp8_zigzag_scan_4x4_frame( dctcoef level[16], dctcoef dct[16] )
+{
+    ZIGZAG4_FRAME
+}
+
+#undef ZIG
 #define ZIG(i,y,x) {\
     int oe = x+y*FENC_STRIDE;\
     int od = x+y*FDEC_STRIDE;\
@@ -1097,7 +1105,7 @@ static void zigzag_interleave_8x8_cavlc( dctcoef *dst, dctcoef *src, uint8_t *nn
     }
 }
 
-void x264_zigzag_init( int cpu, x264_zigzag_function_t *pf_progressive, x264_zigzag_function_t *pf_interlaced )
+void x264_zigzag_init( x264_t *h, int cpu, x264_zigzag_function_t *pf_progressive, x264_zigzag_function_t *pf_interlaced )
 {
     pf_interlaced->scan_8x8   = zigzag_scan_8x8_field;
     pf_progressive->scan_8x8  = zigzag_scan_8x8_frame;
@@ -1216,4 +1224,6 @@ void x264_zigzag_init( int cpu, x264_zigzag_function_t *pf_progressive, x264_zig
     }
 #endif // HIGH_BIT_DEPTH
 #endif
+    if( h->param.b_vp8 )
+        pf_progressive->scan_4x4 = vp8_zigzag_scan_4x4_frame;
 }
