@@ -541,25 +541,25 @@ static void vp8_sub4x4_dct( dctcoef dct[16], pixel *pix1, pixel *pix2 )
         int c1 = ((d[i*4+1] - d[i*4+2])<<3);
         int d1 = ((d[i*4+0] - d[i*4+3])<<3);
 
-        tmp[0*4+i] = a1 + b1;
-        tmp[2*4+i] = a1 - b1;
+        tmp[i*4+0] = a1 + b1;
+        tmp[i*4+2] = a1 - b1;
 
-        tmp[1*4+i] = (c1 * 2217 + d1 * 5352 + 14500)>>12;
-        tmp[3*4+i] = (d1 * 2217 - c1 * 5352 +  7500)>>12;
+        tmp[i*4+1] = (c1 * 2217 + d1 * 5352 + 14500)>>12;
+        tmp[i*4+3] = (d1 * 2217 - c1 * 5352 +  7500)>>12;
     }
 
     for( int i = 0; i < 4; i++ )
     {
-        int a1 = tmp[i*4+0] + tmp[i*4+3];
-        int b1 = tmp[i*4+1] + tmp[i*4+2];
-        int c1 = tmp[i*4+1] - tmp[i*4+2];
-        int d1 = tmp[i*4+0] - tmp[i*4+3];
+        int a1 = tmp[0*4+i] + tmp[3*4+i];
+        int b1 = tmp[1*4+i] + tmp[2*4+i];
+        int c1 = tmp[1*4+i] - tmp[2*4+i];
+        int d1 = tmp[0*4+i] - tmp[3*4+i];
 
-        dct[i*4+0] = (a1 + b1 + 7)>>4;
-        dct[i*4+2] = (a1 - b1 + 7)>>4;
+        dct[0*4+i] = (a1 + b1 + 7)>>4;
+        dct[2*4+i] = (a1 - b1 + 7)>>4;
 
-        dct[i*4+1] =((c1 * 2217 + d1 * 5352 +  12000)>>16) + (!!d1);
-        dct[i*4+3] = (d1 * 2217 - c1 * 5352 +  51000)>>16;
+        dct[1*4+i] =((c1 * 2217 + d1 * 5352 +  12000)>>16) + (!!d1);
+        dct[3*4+i] = (d1 * 2217 - c1 * 5352 +  51000)>>16;
     }
 }
 
@@ -593,27 +593,27 @@ void vp8_dct4x4dc( dctcoef d[16] )
         int c1 = (d[i*4+1] - d[i*4+3])<<2;
         int b1 = (d[i*4+0] - d[i*4+2])<<2;
 
-        tmp[0*4+i] = a1 + d1 + !!a1;
-        tmp[1*4+i] = b1 + c1;
-        tmp[2*4+i] = b1 - c1;
-        tmp[3*4+i] = a1 - d1;
+        tmp[i*4+0] = a1 + d1 + !!a1;
+        tmp[i*4+1] = b1 + c1;
+        tmp[i*4+2] = b1 - c1;
+        tmp[i*4+3] = a1 - d1;
     }
 
     for( int i = 0; i < 4; i++ )
     {
-        int a1 = tmp[i*4+0] + tmp[i*4+2];
-        int d1 = tmp[i*4+1] + tmp[i*4+3];
-        int c1 = tmp[i*4+1] - tmp[i*4+3];
-        int b1 = tmp[i*4+0] - tmp[i*4+2];
+        int a1 = tmp[0*4+i] + tmp[2*4+i];
+        int d1 = tmp[1*4+i] + tmp[3*4+i];
+        int c1 = tmp[1*4+i] - tmp[3*4+i];
+        int b1 = tmp[0*4+i] - tmp[2*4+i];
         int a2 = a1 + d1;
         int b2 = b1 + c1;
         int c2 = b1 - c1;
         int d2 = a1 - d1;
 
-        d[i*4+0] = (a2-(a2>>31)+3) >> 3;
-        d[i*4+1] = (b2-(b2>>31)+3) >> 3;
-        d[i*4+2] = (c2-(c2>>31)+3) >> 3;
-        d[i*4+3] = (d2-(d2>>31)+3) >> 3;
+        d[0*4+i] = (a2-(a2>>31)+3) >> 3;
+        d[1*4+i] = (b2-(b2>>31)+3) >> 3;
+        d[2*4+i] = (c2-(c2>>31)+3) >> 3;
+        d[3*4+i] = (d2-(d2>>31)+3) >> 3;
     }
 }
 
@@ -632,26 +632,26 @@ static void vp8_add4x4_idct( pixel *dst, dctcoef dct[16] )
         int t3 = dct[1*4+i] + ((dct[1*4+i] * 20091) >> 16);
         int t4 = (dct[3*4+i] * 35468) >> 16;
         int d1 = t3 + t4;
-        tmp[i*4+0] = a1 + d1;
-        tmp[i*4+3] = a1 - d1;
-        tmp[i*4+1] = b1 + c1;
-        tmp[i*4+2] = b1 - c1;
+        tmp[0*4+i] = a1 + d1;
+        tmp[3*4+i] = a1 - d1;
+        tmp[1*4+i] = b1 + c1;
+        tmp[2*4+i] = b1 - c1;
     }
 
     for( int i = 0; i < 4; i++ )
     {
-        int a1 = tmp[0*4+i] + tmp[2*4+i];
-        int b1 = tmp[0*4+i] - tmp[2*4+i];
-        int t1 = (tmp[1*4+i] * 35468) >> 16;
-        int t2 = tmp[3*4+i] + ((tmp[3*4+i] * 20091) >> 16);
+        int a1 = tmp[0+i*4] + tmp[2+i*4];
+        int b1 = tmp[0+i*4] - tmp[2+i*4];
+        int t1 = (tmp[1+i*4] * 35468) >> 16;
+        int t2 = tmp[3+i*4] + ((tmp[3+i*4] * 20091) >> 16);
         int c1 = t1 - t2;
-        int t3 = tmp[1*4+i] + ((tmp[1*4+i] * 20091) >> 16);
-        int t4 = (tmp[3*4+i] * 35468) >> 16;
+        int t3 = tmp[1+i*4] + ((tmp[1+i*4] * 20091) >> 16);
+        int t4 = (tmp[3+i*4] * 35468) >> 16;
         int d1 = t3 + t4;
-        d[0*4+i] = (a1 + d1 + 4) >> 3;
-        d[3*4+i] = (a1 - d1 + 4) >> 3;
-        d[1*4+i] = (b1 + c1 + 4) >> 3;
-        d[2*4+i] = (b1 - c1 + 4) >> 3;
+        d[0+i*4] = (a1 + d1 + 4) >> 3;
+        d[3+i*4] = (a1 - d1 + 4) >> 3;
+        d[1+i*4] = (b1 + c1 + 4) >> 3;
+        d[2+i*4] = (b1 - c1 + 4) >> 3;
     }
 
 
@@ -688,10 +688,10 @@ static void vp8_idct4x4dc( dctcoef d[16] )
 
     for( int i = 0; i < 4; i++ )
     {
-        int a1 = d[i*4+0] + d[i*4+3];
-        int b1 = d[i*4+1] + d[i*4+2];
-        int c1 = d[i*4+1] - d[i*4+2];
-        int d1 = d[i*4+0] - d[i*4+3];
+        int a1 = d[0*4+i] + d[3*4+i];
+        int b1 = d[1*4+i] + d[2*4+i];
+        int c1 = d[1*4+i] - d[2*4+i];
+        int d1 = d[0*4+i] - d[3*4+i];
 
         tmp[0*4+i] = a1 + b1;
         tmp[1*4+i] = c1 + d1;
@@ -1003,6 +1003,14 @@ static void zigzag_scan_4x4_field( dctcoef level[16], dctcoef dct[16] )
 }
 
 #undef ZIG
+#define ZIG(i,y,x) level[i] = dct[y*4+x];
+
+static void vp8_zigzag_scan_4x4_frame( dctcoef level[16], dctcoef dct[16] )
+{
+    ZIGZAG4_FRAME
+}
+
+#undef ZIG
 #define ZIG(i,y,x) {\
     int oe = x+y*FENC_STRIDE;\
     int od = x+y*FDEC_STRIDE;\
@@ -1097,7 +1105,7 @@ static void zigzag_interleave_8x8_cavlc( dctcoef *dst, dctcoef *src, uint8_t *nn
     }
 }
 
-void x264_zigzag_init( int cpu, x264_zigzag_function_t *pf_progressive, x264_zigzag_function_t *pf_interlaced )
+void x264_zigzag_init( x264_t *h, int cpu, x264_zigzag_function_t *pf_progressive, x264_zigzag_function_t *pf_interlaced )
 {
     pf_interlaced->scan_8x8   = zigzag_scan_8x8_field;
     pf_progressive->scan_8x8  = zigzag_scan_8x8_frame;
@@ -1216,4 +1224,6 @@ void x264_zigzag_init( int cpu, x264_zigzag_function_t *pf_progressive, x264_zig
     }
 #endif // HIGH_BIT_DEPTH
 #endif
+    if( h->param.b_vp8 )
+        pf_progressive->scan_4x4 = vp8_zigzag_scan_4x4_frame;
 }
