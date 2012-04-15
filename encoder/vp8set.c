@@ -28,6 +28,7 @@
 
 void x264_vp8_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh )
 {
+    int chroma_qp_delta = h->chroma_qp_table[sh->i_qp] - sh->i_qp;
     int keyframe = sh->i_idr_pic_id >= 0;
     int header_byte = (!keyframe               << 0)
                     + (0 /* regular profile */ << 1)
@@ -74,8 +75,8 @@ void x264_vp8_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh )
     x264_vp8rac_encode_sint_bypass( cb, 0, 4 );       /* ydc_delta */
     x264_vp8rac_encode_sint_bypass( cb, 0, 4 );       /* y2dc_delta */
     x264_vp8rac_encode_sint_bypass( cb, 0, 4 );       /* y2ac_delta */
-    x264_vp8rac_encode_sint_bypass( cb, 0, 4 );       /* uvdc_delta */
-    x264_vp8rac_encode_sint_bypass( cb, 0, 4 );       /* uvac_delta */
+    x264_vp8rac_encode_sint_bypass( cb, chroma_qp_delta, 4 );       /* uvdc_delta */
+    x264_vp8rac_encode_sint_bypass( cb, chroma_qp_delta, 4 );       /* uvac_delta */
 
     if( !keyframe )
     {

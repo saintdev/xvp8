@@ -1167,7 +1167,11 @@ x264_t *x264_encoder_open( x264_param_t *param )
 
     x264_validate_levels( h, 1 );
 
-    h->chroma_qp_table = i_chroma_qp_table + 12 + h->pps->i_chroma_qp_index_offset;
+    if( h->param.b_vp8 )
+        h->chroma_qp_table = vp8_chroma_qp_table;
+    else
+        h->chroma_qp_table = i_chroma_qp_table;
+    h->chroma_qp_table += 12 + h->pps->i_chroma_qp_index_offset;
 
     if( x264_cqm_init( h ) < 0 )
         goto fail;
