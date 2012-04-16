@@ -48,6 +48,51 @@ static const uint8_t *const dct_cat_probs[] =
 
 static const uint8_t dct_cat_bits[] = { 1, 2, 3, 4, 5, 11 };
 
+static void x264_vp8rac_intra4x4_pred_mode( x264_t *h, x264_vp8rac_t *rc, int i_mode, const uint8_t prob[9] )
+{
+    if( i_mode == I_PRED_4x4_DC )
+        x264_vp8rac_encode_decision( rc, prob[0], 0 );  /* B_DC_PRED */
+    else
+    {
+        x264_vp8rac_encode_decision( rc, prob[0], 1 );
+        if( i_mode == I_PRED_4x4_TM )
+            x264_vp8rac_encode_decision( rc, prob[1], 0 );  /* B_TM_PRED */
+        else
+        {
+            x264_vp8rac_encode_decision( rc, prob[1], 1 );
+            if( i_mode == I_PRED_4x4_V )
+                x264_vp8rac_encode_decision( rc, prob[2], 0 );  /* B_VE_PRED */
+            else
+            {
+                x264_vp8rac_encode_decision( rc, prob[2], 1 );
+                if( i_mode == I_PRED_4x4_DDL || i_mode >= I_PRED_4x4_HD )
+                {
+                    x264_vp8rac_encode_decision( rc, prob[3], 1 );
+                    if( i_mode == I_PRED_4x4_DDL )
+                        x264_vp8rac_encode_decision( rc, prob[6], 0 );  /* B_LD_PRED */
+                    else
+                    {
+                        int a = !(i_mode & 1);
+                        x264_vp8rac_encode_decision( rc, prob[6], 1 );
+                        x264_vp8rac_encode_decision( rc, prob[7], a );  /* B_VL_PRED */
+                        if( a )
+                            x264_vp8rac_encode_decision( rc, prob[8], i_mode >> 3 );    /* B_HD_PRED/B_HU_PRED */
+                    }
+                }
+                else
+                {
+                    int a = i_mode >> 2;
+                    x264_vp8rac_encode_decision( rc, prob[3], 0 );
+
+                    x264_vp8rac_encode_decision( rc, prob[4], a );  /* B_HE_PRED */
+                    if( a )
+                        x264_vp8rac_encode_decision( rc, prob[5], i_mode&1 );   /* B_RD_PRED/B_VR_PRED */
+                }
+            }
+        }
+    }
+}
+
 /* Write a single DCT coefficient */
 static ALWAYS_INLINE void x264_vp8rac_block_residual_coeff( x264_t *h, x264_vp8rac_t *rc, const uint8_t prob[NUM_DCT_TOKENS-1], dctcoef abs_coeff, int sign )
 {
@@ -164,7 +209,15 @@ void x264_macroblock_write_vp8rac( x264_t *h, x264_vp8rac_t *partition_rac )
         if( h->mb.i_type == I_4x4 )
         {
             x264_vp8rac_encode_decision( cb, 145, 0 );
-            /* TODO: put i4x4 modes here */
+            for( int i = 0; i < 16; i++ )
+            {
+                int i_mode = x264_mb_pred_mode4x4_fix( h->mb.cache.intra4x4_pred_mode[x264_raster8[i]] );
+                int left = x264_mb_pred_mode4x4_fix( h->mb.cache.intra4x4_pred_mode[x264_raster8[i] - 1] );
+                int top  = x264_mb_pred_mode4x4_fix( h->mb.cache.intra4x4_pred_mode[x264_raster8[i] - 8] );
+                top = top < 0 ? I_PRED_4x4_DC : top;
+                left = left < 0 ? I_PRED_4x4_DC : left;
+                x264_vp8rac_intra4x4_pred_mode( h, cb, i_mode, x264_vp8_intra4x4_pred_probs[top][left] );
+            }
         }
         else
         {
@@ -220,7 +273,12 @@ void x264_macroblock_write_vp8rac( x264_t *h, x264_vp8rac_t *partition_rac )
         }
         else
         {
-            /* TODO I_4x4 */
+            for( int i = 0; i < 16; i++ )
+            {
+                int t = h->mb.cache.non_zero_count[x264_raster8[i] - 8] & 0x7f;
+                int l = h->mb.cache.non_zero_count[x264_raster8[i] - 1] & 0x7f;
+                x264_vp8rac_block_residual_dc_cbf( h, partition_rac, x264_vp8_default_dct_probs[3], x264_raster8[i], h->dct.luma4x4[i], t + l );
+            }
         }
 
         /* Chroma residual */

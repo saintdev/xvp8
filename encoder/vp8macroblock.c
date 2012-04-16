@@ -84,6 +84,31 @@ static void x264_vp8_mb_encode_i16x16( x264_t *h, int i_qp )
         h->dctf.add16x16_idct( p_dst, dct4x4 );
 }
 
+void x264_vp8_mb_encode_i4x4( x264_t *h, int idx, int i_qp, int i_mode )
+{
+    int nz;
+    pixel *p_src = &h->mb.pic.p_fenc[0][vp8_block_idx_xy_fenc[idx]];
+    pixel *p_dst = &h->mb.pic.p_fdec[0][vp8_block_idx_xy_fdec[idx]];
+    ALIGNED_ARRAY_16( dctcoef, dct4x4,[16] );
+
+    h->predict_4x4[i_mode]( p_dst );
+
+    h->dctf.sub4x4_dct( dct4x4, p_src, p_dst );
+
+    if( h->mb.b_noise_reduction )
+        h->quantf.denoise_dct( dct4x4, h->nr_residual_sum[0], h->nr_offset[0], 16 );
+
+    nz = h->quantf.vp8quant_4x4( dct4x4, h->vp8quant_mf[1][i_qp], h->vp8quant_bias[1][i_qp] );
+    h->mb.cache.non_zero_count[x264_raster8[idx]] = nz;
+    if( nz )
+    {
+        h->mb.i_cbp_luma |= 1<<(idx>>2);
+        h->zigzagf.scan_4x4( h->dct.luma4x4[idx], dct4x4 );
+        h->quantf.vp8dequant_4x4( dct4x4, h->vp8dequant_mf[1][i_qp] );
+        h->dctf.add4x4_idct( p_dst, dct4x4 );
+    }
+}
+
 static void x264_vp8_mb_encode_chroma( x264_t *h, int i_qp )
 {
     int nz;
@@ -137,7 +162,11 @@ void x264_vp8_macroblock_encode( x264_t *h )
     }
     else if( h->mb.i_type == I_4x4 )
     {
-        /* TODO: I4x4 MB*/
+        for( int i = 0; i < 16; i++ )
+        {
+            int i_mode = h->mb.cache.intra4x4_pred_mode[x264_raster8[i]];
+            x264_vp8_mb_encode_i4x4( h, i, i_qp, i_mode );
+        }
     }
     else
     {
