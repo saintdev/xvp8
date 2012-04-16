@@ -268,6 +268,36 @@ static const uint8_t i_chroma_qp_table[QP_MAX+1+12*2] =
     QP(39), QP(39), QP(39), QP(39), QP(39), QP(39),
     QP(39), QP(39), QP(39), QP(39), QP(39), QP(39),
 };
+
+static const uint8_t vp8_chroma_qp_table[VP8_QP_MAX+1+12*2] =
+{
+          0,       0,       0,       0,       0,       0,
+          0,       0,       0,       0,       0,       0,
+      QP(0),   QP(1),   QP(2),   QP(3),   QP(4),   QP(5),
+      QP(6),   QP(7),   QP(8),   QP(9),  QP(10),  QP(11),
+     QP(12),  QP(13),  QP(14),  QP(15),  QP(16),  QP(17),
+     QP(18),  QP(19),  QP(20),  QP(21),  QP(22),  QP(23),
+     QP(24),  QP(25),  QP(26),  QP(27),  QP(28),  QP(29),
+     QP(30),  QP(31),  QP(32),  QP(33),  QP(34),  QP(35),
+     QP(36),  QP(37),  QP(38),  QP(39),  QP(40),  QP(41),
+     QP(42),  QP(43),  QP(44),  QP(45),  QP(46),  QP(47),
+     QP(48),  QP(49),  QP(50),  QP(51),  QP(52),  QP(53),
+     QP(54),  QP(55),  QP(56),  QP(57),  QP(58),  QP(59),
+     QP(60),  QP(61),  QP(62),  QP(63),  QP(64),  QP(65),
+     QP(66),  QP(67),  QP(68),  QP(69),  QP(70),  QP(71),
+     QP(72),  QP(73),  QP(74),  QP(75),  QP(76),  QP(77),
+     QP(78),  QP(79),  QP(80),  QP(81),  QP(82),  QP(83),
+     QP(84),  QP(85),  QP(86),  QP(87),  QP(88),  QP(89),
+     QP(90),  QP(91),  QP(92),  QP(93),  QP(94),  QP(95),
+     QP(96),  QP(97),  QP(98),  QP(99), QP(100), QP(101),
+    QP(102), QP(103), QP(104), QP(105), QP(106), QP(107),
+    QP(108), QP(109), QP(110), QP(111), QP(112), QP(113),
+    QP(114), QP(115), QP(116), QP(117), QP(118), QP(119),
+    QP(120), QP(121), QP(122), QP(123), QP(124), QP(125),
+    QP(126), QP(127),
+    QP(127), QP(127), QP(127), QP(127), QP(127), QP(127),
+    QP(127), QP(127), QP(127), QP(127), QP(127), QP(127),
+};
 #undef QP
 
 enum cabac_ctx_block_cat_e
