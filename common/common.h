@@ -847,6 +847,8 @@ struct x264_t
         int     b_lossless;
         int     b_direct_auto_read; /* take stats for --direct auto from the 2pass log */
         int     b_direct_auto_write; /* analyse direct modes, to use and/or save */
+        uint8_t *last_luma_dc_top;  /* VP8 only. NNZ for the last luma DC block in the same column */
+        int     last_luma_dc_left;  /* VP8 only. NNZ for the last luma DC block in the same row */
 
         /* lambda values */
         int     i_trellis_lambda2[2][2]; /* [luma,chroma][inter,intra] */

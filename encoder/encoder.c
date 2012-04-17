@@ -2271,6 +2271,8 @@ static int x264_slice_write( x264_t *h )
          * Give coefficient partitions their own bitstream?
          */
         x264_vp8rac_encode_init( &h->vp8.coeff_partitions[0], h->out.bs.p + 50 * h->mb.i_mb_count, h->out.bs.p_end );
+
+        memset( h->mb.last_luma_dc_top, 0, sizeof(*h->mb.last_luma_dc_top) * h->mb.i_mb_width );
     }
     else if( h->param.b_cabac )
     {
@@ -2305,6 +2307,8 @@ static int x264_slice_write( x264_t *h )
                     return -1;
                 if( x264_bitstream_check_buffer( h, &h->vp8.coeff_partitions[0] ) )
                     return -1;
+
+                h->mb.last_luma_dc_left = 0;
             }
             else if( x264_bitstream_check_buffer( h, &h->cabac ) )
                     return -1;
