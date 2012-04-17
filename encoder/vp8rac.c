@@ -205,19 +205,17 @@ void x264_macroblock_write_vp8rac( x264_t *h, x264_vp8rac_t *partition_rac )
         /* write residual */
         if( i_mb_type == I_16x16 )
         {
-            int nnz_pred = 0;
-
-            nnz_pred += h->mb.cache.i_cbp_top == -1 ? 0 : !!(h->mb.cache.i_cbp_top & 0x100);
-            nnz_pred += h->mb.cache.i_cbp_left == -1 ? 0 : !!(h->mb.cache.i_cbp_left & 0x100);
+            int t = h->mb.last_luma_dc_top[h->mb.i_mb_x];
+            int l = h->mb.last_luma_dc_left;
 
             /* DC Luma */
-            x264_vp8rac_block_residual_dc_cbf( h, partition_rac, x264_vp8_default_dct_probs[1], x264_scan8[LUMA_DC], h->dct.luma16x16_dc[0], nnz_pred );
+            x264_vp8rac_block_residual_dc_cbf( h, partition_rac, x264_vp8_default_dct_probs[1], x264_scan8[LUMA_DC], h->dct.luma16x16_dc[0], t + l );
 
             /* AC Luma */
             for( int i = 0; i < 16; i++ )
             {
-                int t = h->mb.cache.non_zero_count[x264_raster8[i] - 8] & 0x7f;
-                int l = h->mb.cache.non_zero_count[x264_raster8[i] - 1] & 0x7f;
+                t = h->mb.cache.non_zero_count[x264_raster8[i] - 8] & 0x7f;
+                l = h->mb.cache.non_zero_count[x264_raster8[i] - 1] & 0x7f;
                 x264_vp8rac_block_residual_cbf( h, partition_rac, x264_vp8_default_dct_probs[0], x264_raster8[i], h->dct.luma4x4[i], t + l );
             }
         }

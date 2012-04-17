@@ -383,6 +383,9 @@ int x264_macroblock_thread_allocate( x264_t *h, int b_lookahead )
         }
     }
 
+    if( h->param.b_vp8 )
+        CHECKED_MALLOCZERO( h->mb.last_luma_dc_top, sizeof(*h->mb.last_luma_dc_top) * h->mb.i_mb_width );
+
     /* Allocate scratch buffer */
     int scratch_size = 0;
     if( !b_lookahead )
@@ -418,6 +421,7 @@ void x264_macroblock_thread_free( x264_t *h, int b_lookahead )
                 x264_free( h->intra_border_backup[i][j] - 16 );
     }
     x264_free( h->scratch_buffer );
+    x264_free( h->mb.last_luma_dc_top );
 }
 
 void x264_macroblock_slice_init( x264_t *h )
@@ -1740,6 +1744,9 @@ void x264_macroblock_cache_save( x264_t *h )
     else
         M64( i4x4 ) = (uint8_t)(-1) * 0x0101010101010101ULL;
 
+    if( h->param.b_vp8 && i_mb_type == I_16x16 )
+        h->mb.last_luma_dc_left = h->mb.last_luma_dc_top[h->mb.i_mb_x] =
+            h->mb.cache.non_zero_count[x264_scan8[LUMA_DC]];
 
     if( i_mb_type == I_PCM )
     {
