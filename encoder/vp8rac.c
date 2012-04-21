@@ -156,8 +156,7 @@ void x264_macroblock_write_vp8rac( x264_t *h, x264_vp8rac_t *partition_rac )
     int       i_mb_pos_tex;
 #endif
 
-    /* Force noskip for now */
-    x264_vp8rac_encode_decision( cb, 0x80, 0 );
+    x264_vp8rac_encode_decision( cb, 0x80, !h->mb.cbp[h->mb.i_mb_xy] );
 
     if( h->sh.i_type == SLICE_TYPE_I )
     {
@@ -200,7 +199,7 @@ void x264_macroblock_write_vp8rac( x264_t *h, x264_vp8rac_t *partition_rac )
     h->stat.frame.i_mv_bits += i_mb_pos_tex - i_mb_pos_start;
 #endif
 
-    if( h->mb.i_cbp_luma || h->mb.i_cbp_chroma || i_mb_type == I_16x16 )
+    if( h->mb.cbp[h->mb.i_mb_xy] )
     {
         /* write residual */
         if( i_mb_type == I_16x16 )
