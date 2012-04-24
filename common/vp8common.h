@@ -38,5 +38,28 @@ static const uint8_t x264_raster8[16] =
     4+ 4*8, 5+ 4*8, 6+ 4*8, 7+ 4*8,
 };
 
+static const uint8_t vp8_block_idx_xy_fenc[16] =
+{
+    0*4 + 0*4*FENC_STRIDE, 1*4 + 0*4*FENC_STRIDE,
+    2*4 + 0*4*FENC_STRIDE, 3*4 + 0*4*FENC_STRIDE,
+    0*4 + 1*4*FENC_STRIDE, 1*4 + 1*4*FENC_STRIDE,
+    2*4 + 1*4*FENC_STRIDE, 3*4 + 1*4*FENC_STRIDE,
+    0*4 + 2*4*FENC_STRIDE, 1*4 + 2*4*FENC_STRIDE,
+    2*4 + 2*4*FENC_STRIDE, 3*4 + 2*4*FENC_STRIDE,
+    0*4 + 3*4*FENC_STRIDE, 1*4 + 3*4*FENC_STRIDE,
+    2*4 + 3*4*FENC_STRIDE, 3*4 + 3*4*FENC_STRIDE
+};
+static const uint16_t vp8_block_idx_xy_fdec[16] =
+{
+    0*4 + 0*4*FDEC_STRIDE, 1*4 + 0*4*FDEC_STRIDE,
+    2*4 + 0*4*FDEC_STRIDE, 3*4 + 0*4*FDEC_STRIDE,
+    0*4 + 1*4*FDEC_STRIDE, 1*4 + 1*4*FDEC_STRIDE,
+    2*4 + 1*4*FDEC_STRIDE, 3*4 + 1*4*FDEC_STRIDE,
+    0*4 + 2*4*FDEC_STRIDE, 1*4 + 2*4*FDEC_STRIDE,
+    2*4 + 2*4*FDEC_STRIDE, 3*4 + 2*4*FDEC_STRIDE,
+    0*4 + 3*4*FDEC_STRIDE, 1*4 + 3*4*FDEC_STRIDE,
+    2*4 + 3*4*FDEC_STRIDE, 3*4 + 3*4*FDEC_STRIDE
+};
+
 #endif
 

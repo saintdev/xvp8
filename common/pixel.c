@@ -756,7 +756,7 @@ static int x264_pixel_ads1( int enc_dc[1], uint16_t *sums, int delta,
 /****************************************************************************
  * x264_pixel_init:
  ****************************************************************************/
-void x264_pixel_init( int cpu, x264_pixel_function_t *pixf )
+void x264_pixel_init( x264_t *h, int cpu, x264_pixel_function_t *pixf )
 {
     memset( pixf, 0, sizeof(*pixf) );
 
@@ -1268,5 +1268,11 @@ void x264_pixel_init( int cpu, x264_pixel_function_t *pixf )
     pixf->ads[PIXEL_8x4] =
     pixf->ads[PIXEL_4x8] = pixf->ads[PIXEL_16x8];
     pixf->ads[PIXEL_4x4] = pixf->ads[PIXEL_8x8];
+
+    if( h->param.b_vp8 )
+    {
+        pixf->intra_sad_x9_4x4    =
+        pixf->intra_satd_x9_4x4   = NULL;
+    }
 }
 

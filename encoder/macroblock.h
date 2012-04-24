@@ -69,6 +69,7 @@ void x264_noise_reduction_update( x264_t *h );
 
 /* VP8 */
 void x264_vp8_macroblock_encode( x264_t *h );
+void x264_vp8_mb_encode_i4x4( x264_t *h, int idx, int i_qp, int i_mode );
 
 static ALWAYS_INLINE int x264_quant_4x4( x264_t *h, dctcoef dct[16], int i_qp, int ctx_block_cat, int b_intra, int p, int idx )
 {

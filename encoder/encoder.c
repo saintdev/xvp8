@@ -514,8 +514,6 @@ static int x264_validate_parameters( x264_t *h, int b_open )
         h->param.analyse.b_mixed_references = 0;
         /* TODO: make dct decimate work only per-mb instead of per-cbp for VP8 */
         h->param.analyse.b_dct_decimate = 0;
-        /* i4x4 off for now */
-        h->param.analyse.intra = 0;
         h->param.b_cabac = 1;
         /* Up this to 3 later? */
         h->param.i_frame_reference = 1;
@@ -1240,8 +1238,8 @@ x264_t *x264_encoder_open( x264_param_t *param )
     x264_predict_8x8c_init( h, h->param.cpu, h->predict_8x8c );
     x264_predict_8x16c_init( h->param.cpu, h->predict_8x16c );
     x264_predict_8x8_init( h->param.cpu, h->predict_8x8, &h->predict_8x8_filter );
-    x264_predict_4x4_init( h->param.cpu, h->predict_4x4 );
-    x264_pixel_init( h->param.cpu, &h->pixf );
+    x264_predict_4x4_init( h, h->param.cpu, h->predict_4x4 );
+    x264_pixel_init( h, h->param.cpu, &h->pixf );
     x264_dct_init( h, h->param.cpu, &h->dctf );
     x264_zigzag_init( h, h->param.cpu, &h->zigzagf_progressive, &h->zigzagf_interlaced );
     memcpy( &h->zigzagf, PARAM_INTERLACED ? &h->zigzagf_interlaced : &h->zigzagf_progressive, sizeof(h->zigzagf) );
@@ -3741,7 +3739,7 @@ void    x264_encoder_close  ( x264_t *h )
                   h->stat.i_mb_cbp[4] * 100.0 / (i_all_intra*csize), buf );
 
         char *pname = h->param.b_vp8 ? "tm" : "p";
-        int64_t fixed_pred_modes[4][9] = {{0}};
+        int64_t fixed_pred_modes[4][10] = {{0}};
         int64_t sum_pred_modes[4] = {0};
         for( int i = 0; i <= I_PRED_16x16_DC_128; i++ )
         {

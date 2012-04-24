@@ -928,8 +928,8 @@ struct x264_t
 
     /* CPU functions dependents */
     x264_predict_t      predict_16x16[4+3];
-    x264_predict8x8_t   predict_8x8[9+3];
-    x264_predict_t      predict_4x4[9+3];
+    x264_predict8x8_t   predict_8x8[10+3];
+    x264_predict_t      predict_4x4[10+3];
     x264_predict_t      predict_chroma[4+3];
     x264_predict_t      predict_8x8c[4+3];
     x264_predict_t      predict_8x16c[4+3];
