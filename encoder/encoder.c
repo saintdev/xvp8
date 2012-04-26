@@ -194,7 +194,8 @@ static void x264_slice_header_init( x264_t *h, x264_slice_header_t *sh,
 
     int deblock_thresh = i_qp + 2 * X264_MIN(param->i_deblocking_filter_alphac0, param->i_deblocking_filter_beta);
     /* If effective qp <= 15, deblocking would have no effect anyway */
-    if( param->b_deblocking_filter && (h->mb.b_variable_qp || 15 < deblock_thresh ) )
+    /* VP8 TODO: When to disable deblocking */
+    if( param->b_deblocking_filter && !h->param.b_vp8 && (h->mb.b_variable_qp || 15 < deblock_thresh ) )
         sh->i_disable_deblocking_filter_idc = param->b_sliced_threads ? 2 : 0;
     else
         sh->i_disable_deblocking_filter_idc = 1;
@@ -1245,7 +1246,7 @@ x264_t *x264_encoder_open( x264_param_t *param )
     memcpy( &h->zigzagf, PARAM_INTERLACED ? &h->zigzagf_interlaced : &h->zigzagf_progressive, sizeof(h->zigzagf) );
     x264_mc_init( h->param.cpu, &h->mc );
     x264_quant_init( h, h->param.cpu, &h->quantf );
-    x264_deblock_init( h->param.cpu, &h->loopf, PARAM_INTERLACED );
+    x264_deblock_init( h, h->param.cpu, &h->loopf, PARAM_INTERLACED );
     x264_bitstream_init( h->param.cpu, &h->bsf );
     if( h->param.b_cabac )
         x264_cabac_init( h );
@@ -1949,7 +1950,10 @@ static void x264_fdec_filter_row( x264_t *h, int mb_y, int pass )
 
     if( b_deblock )
         for( int y = min_y; y < mb_y; y += (1 << SLICE_MBAFF) )
-            x264_frame_deblock_row( h, y );
+            if( h->param.b_vp8 )
+                x264_vp8_deblock_row( h, y );
+            else
+                x264_frame_deblock_row( h, y );
 
     /* FIXME: Prediction requires different borders for interlaced/progressive mc,
      * but the actual image data is equivalent. For now, maintain this
