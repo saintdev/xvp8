@@ -382,6 +382,7 @@ static int x264_bitstream_check_buffer( x264_t *h, void *c )
         h->vp8.header_rac.p_start += delta;
         h->vp8.header_rac.p += delta;
         h->vp8.header_rac.p_end = end;
+        h->vp8.header_ptr += delta;
 
         h->vp8.coeff_partitions[0].p_start += delta;
         h->vp8.coeff_partitions[0].p += delta;
