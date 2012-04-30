@@ -29,6 +29,7 @@
 void x264_vp8_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh )
 {
     int chroma_qp_delta = h->chroma_qp_table[sh->i_qp] - sh->i_qp;
+    int filter_level = sh->i_disable_deblocking_filter_idc ? 0 : x264_vp8_deblock_level_table[sh->i_qp];
     int keyframe = sh->i_idr_pic_id >= 0;
     int header_byte = (!keyframe               << 0)
                     + (0 /* regular profile */ << 1)
@@ -64,9 +65,10 @@ void x264_vp8_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh )
     }
 
     x264_vp8rac_encode_bypass( cb, 0 ); /* no segmentation for now */
-    x264_vp8rac_encode_bypass( cb, 1 ); /* simple filter for now */
-    x264_vp8rac_encode_uint_bypass( cb, 0, 6 ); /* filter level: 0 */
-    x264_vp8rac_encode_uint_bypass( cb, 0, 3 ); /* filter sharpness: 0 */
+    x264_vp8rac_encode_bypass( cb, 0 ); /* normal filter
+                                         * TODO: simple filter */
+    x264_vp8rac_encode_uint_bypass( cb, filter_level, 6 ); /* filter level */
+    x264_vp8rac_encode_uint_bypass( cb, 0, 3 ); /* filter sharpness */
     x264_vp8rac_encode_bypass( cb, 0 ); /* no lf deltas */
     x264_vp8rac_encode_uint_bypass( cb, 0, 2 ); /* No bitstream partitions */
 

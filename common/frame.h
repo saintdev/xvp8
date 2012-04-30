@@ -180,6 +180,8 @@ typedef struct
 
 typedef void (*x264_deblock_inter_t)( pixel *pix, intptr_t stride, int alpha, int beta, int8_t *tc0 );
 typedef void (*x264_deblock_intra_t)( pixel *pix, intptr_t stride, int alpha, int beta );
+typedef void (*x264_vp8_deblock_edge_t)( pixel *pix, intptr_t stride, int edge, int interior, int hev );
+typedef void (*x264_vp8_deblock_inner_t)( pixel *pix, intptr_t stride, int edge, int interior, int hev );
 typedef struct
 {
     x264_deblock_inter_t deblock_luma[2];
@@ -201,7 +203,14 @@ typedef struct
     void (*deblock_strength) ( uint8_t nnz[X264_SCAN8_SIZE], int8_t ref[2][X264_SCAN8_LUMA_SIZE],
                                int16_t mv[2][X264_SCAN8_LUMA_SIZE][2], uint8_t bs[2][8][4], int mvy_limit,
                                int bframe );
+
+    x264_vp8_deblock_edge_t vp8_deblock_luma_edge[2];
+    x264_vp8_deblock_edge_t vp8_deblock_chroma_edge[2];
+    x264_vp8_deblock_inner_t vp8_deblock_luma[2];
+    x264_vp8_deblock_inner_t vp8_deblock_chroma[2];
 } x264_deblock_function_t;
+
+extern const uint8_t x264_vp8_deblock_level_table[VP8_QP_MAX+1];
 
 void          x264_frame_delete( x264_frame_t *frame );
 
@@ -215,12 +224,13 @@ void          x264_frame_expand_border_mod16( x264_t *h, x264_frame_t *frame );
 void          x264_expand_border_mbpair( x264_t *h, int mb_x, int mb_y );
 
 void          x264_frame_deblock_row( x264_t *h, int mb_y );
+void          x264_vp8_deblock_row( x264_t *h, int mb_y );
 void          x264_macroblock_deblock( x264_t *h );
 
 void          x264_frame_filter( x264_t *h, x264_frame_t *frame, int mb_y, int b_end );
 void          x264_frame_init_lowres( x264_t *h, x264_frame_t *frame );
 
-void          x264_deblock_init( int cpu, x264_deblock_function_t *pf, int b_mbaff );
+void          x264_deblock_init( x264_t *h, int cpu, x264_deblock_function_t *pf, int b_mbaff );
 
 void          x264_frame_cond_broadcast( x264_frame_t *frame, int i_lines_completed );
 void          x264_frame_cond_wait( x264_frame_t *frame, int i_lines_completed );

@@ -303,6 +303,202 @@ static void deblock_strength_c( uint8_t nnz[X264_SCAN8_SIZE], int8_t ref[2][X264
     }
 }
 
+/* VP8 */
+static ALWAYS_INLINE int vp8_simple_limit( pixel *pix, intptr_t xstride, int threshold )
+{
+    int p1 = pix[-2*xstride];
+    int p0 = pix[-1*xstride];
+    int q0 = pix[ 0*xstride];
+    int q1 = pix[ 1*xstride];
+
+    return 2 * abs( p0 - q0 ) + (abs( p1 - q1 ) >> 1) <= threshold;
+}
+
+/**
+ * E - limit at the macroblock edge
+ * I - limit for interior difference
+ */
+static ALWAYS_INLINE int vp8_normal_limit( pixel *pix, intptr_t xstride, int E, int I)
+{
+    int p3 = pix[-4*xstride];
+    int p2 = pix[-3*xstride];
+    int p1 = pix[-2*xstride];
+    int p0 = pix[-1*xstride];
+    int q0 = pix[ 0*xstride];
+    int q1 = pix[ 1*xstride];
+    int q2 = pix[ 2*xstride];
+    int q3 = pix[ 3*xstride];
+
+    return vp8_simple_limit( pix, xstride, E )
+           && abs( p3 - p2 ) <= I && abs( p2 - p1 ) <= I && abs( p1 - p0 ) <= I
+           && abs( q3 - q2 ) <= I && abs( q2 - q1 ) <= I && abs( q1 - q0 ) <= I;
+}
+
+// high edge variance
+static ALWAYS_INLINE int vp8_edge_variance( pixel *pix, intptr_t xstride, int threshold )
+{
+    int p1 = pix[-2*xstride];
+    int p0 = pix[-1*xstride];
+    int q0 = pix[ 0*xstride];
+    int q1 = pix[ 1*xstride];
+
+    return abs( p1 - p0 ) > threshold || abs( q1 - q0 ) > threshold;
+}
+
+static ALWAYS_INLINE void vp8_deblock_common( pixel *pix, intptr_t xstride, int is4tap )
+{
+    int p1 = pix[-2*xstride];
+    int p0 = pix[-1*xstride];
+    int q0 = pix[ 0*xstride];
+    int q1 = pix[ 1*xstride];
+
+    int a = 3 * (q0 - p0);
+
+    if( is4tap )
+        a += x264_clip3( p1 - q1, -128, 127 );
+
+    a = x264_clip3( a, -128, 127 );
+
+    // We deviate from the spec here with c(a+3) >> 3
+    // since that's what libvpx does.
+    int delta1 = X264_MIN( a+4, 127 ) >> 3;
+    int delta2 = X264_MIN( a+3, 127 ) >> 3;
+
+    // Despite what the spec says, we do need to clamp here to
+    // be bitexact with libvpx.
+    pix[-1*xstride] = x264_clip_pixel( p0 + delta2 );
+    pix[ 0*xstride] = x264_clip_pixel( q0 - delta1 );
+
+    // only used for _inner on blocks without high edge variance
+    if( !is4tap )
+    {
+        a = (delta1 + 1) >> 1;
+        pix[-2*xstride] = x264_clip_pixel( p1 + a );
+        pix[ 1*xstride] = x264_clip_pixel( q1 - a );
+    }
+}
+
+static inline void vp8_deblock_luma_c( pixel *pix, intptr_t xstride, intptr_t ystride, int edge, int interior, int hev )
+{
+    for( int d = 0; d < 16; d++, pix += ystride )
+        if( vp8_normal_limit( pix, xstride, edge, interior ) )
+        {
+            if( vp8_edge_variance( pix, xstride, hev ) )
+                vp8_deblock_common( pix, xstride, 1 );
+            else
+                vp8_deblock_common( pix, xstride, 0 );
+        }
+}
+static void vp8_deblock_v_luma_c( pixel *pix, intptr_t stride, int edge, int interior, int hev )
+{
+    vp8_deblock_luma_c( pix, stride, 1, edge, interior, hev );
+}
+static void vp8_deblock_h_luma_c( pixel *pix, intptr_t stride, int edge, int interior, int hev )
+{
+    vp8_deblock_luma_c( pix, 1, stride, edge, interior, hev );
+}
+
+static ALWAYS_INLINE void vp8_deblock_chroma_c( pixel *pix, int width, int height, intptr_t xstride, intptr_t ystride, int edge, int interior, int hev )
+{
+    for( int d = 0; d < height; d++, pix += ystride-2 )
+        for( int e = 0; e < width; e++, pix++ )
+            if( vp8_normal_limit( pix, xstride, edge, interior ) )
+            {
+                if( vp8_edge_variance( pix, xstride, hev ) )
+                    vp8_deblock_common( pix, xstride, 1 );
+                else
+                    vp8_deblock_common( pix, xstride, 0 );
+            }
+}
+static void vp8_deblock_v_chroma_c( pixel *pix, intptr_t stride, int edge, int interior, int hev )
+{
+    vp8_deblock_chroma_c( pix, 1, 16, stride, 2, edge, interior, hev );
+}
+static void vp8_deblock_h_chroma_c( pixel *pix, intptr_t stride, int edge, int interior, int hev )
+{
+    vp8_deblock_chroma_c( pix, 2, 8, 2, stride, edge, interior, hev );
+}
+
+static ALWAYS_INLINE void vp8_deblock_edge( pixel *pix, intptr_t xstride )
+{
+    int p2 = pix[-3*xstride];
+    int p1 = pix[-2*xstride];
+    int p0 = pix[-1*xstride];
+    int q0 = pix[ 0*xstride];
+    int q1 = pix[ 1*xstride];
+    int q2 = pix[ 2*xstride];
+
+    int w = x264_clip3( p1 - q1, -128, 127 );
+    w = x264_clip3( w + 3 * (q0 - p0), -128, 127 );
+
+    int a0 = (27 * w + 63) >> 7;
+    int a1 = (18 * w + 63) >> 7;
+    int a2 = ( 9 * w + 63) >> 7;
+
+    pix[-3*xstride] = x264_clip_pixel( p2 + a2 );
+    pix[-2*xstride] = x264_clip_pixel( p1 + a1 );
+    pix[-1*xstride] = x264_clip_pixel( p0 + a0 );
+    pix[ 0*xstride] = x264_clip_pixel( q0 - a0 );
+    pix[ 1*xstride] = x264_clip_pixel( q1 - a1 );
+    pix[ 2*xstride] = x264_clip_pixel( q2 - a2 );
+}
+
+static inline void vp8_deblock_luma_edge_c( pixel *pix, intptr_t xstride, intptr_t ystride, int edge, int interior, int hev )
+{
+    for( int d = 0; d < 16; d++, pix += ystride )
+        if( vp8_normal_limit( pix, xstride, edge, interior ) )
+        {
+            if( vp8_edge_variance( pix, xstride, hev ) )
+                vp8_deblock_common( pix, xstride, 1 );
+            else
+                vp8_deblock_edge( pix, xstride );
+        }
+}
+static void vp8_deblock_v_luma_edge_c( pixel *pix, intptr_t stride, int edge, int interior, int hev )
+{
+    vp8_deblock_luma_edge_c( pix, stride, 1, edge, interior, hev );
+}
+static void vp8_deblock_h_luma_edge_c( pixel *pix, intptr_t stride, int edge, int interior, int hev )
+{
+    vp8_deblock_luma_edge_c( pix, 1, stride, edge, interior, hev );
+}
+
+static ALWAYS_INLINE void vp8_deblock_chroma_edge_c( pixel *pix, int width, int height, intptr_t xstride, intptr_t ystride, int edge, int interior, int hev )
+{
+    for( int d = 0; d < height; d++, pix += ystride-2 )
+        for( int e = 0; e < width; e++, pix++ )
+            if( vp8_normal_limit( pix, xstride, edge, interior ) )
+            {
+                if( vp8_edge_variance( pix, xstride, hev ) )
+                    vp8_deblock_common( pix, xstride, 1 );
+                else
+                    vp8_deblock_edge( pix, xstride );
+            }
+}
+static void vp8_deblock_v_chroma_edge_c( pixel *pix, intptr_t stride, int edge, int interior, int hev )
+{
+    vp8_deblock_chroma_edge_c( pix, 1, 16, stride, 2, edge, interior, hev );
+}
+static void vp8_deblock_h_chroma_edge_c( pixel *pix, intptr_t stride, int edge, int interior, int hev )
+{
+    vp8_deblock_chroma_edge_c( pix, 2, 8, 2, stride, edge, interior, hev );
+}
+
+static void vp8_deblock_strength_c( uint8_t nnz[X264_SCAN8_SIZE], UNUSED int8_t ref[2][X264_SCAN8_LUMA_SIZE],
+                                    UNUSED int16_t mv[2][X264_SCAN8_LUMA_SIZE][2], uint8_t bs[2][8][4],
+                                    UNUSED int mvy_limit, UNUSED int bframe )
+{
+    int non_zero = 0;
+    for( int i = 0; i < 16; i++ )
+        non_zero |= nnz[x264_scan8[i]];
+
+    for( int dir = 0; dir < 2; dir++ )
+        for( int edge = 0; edge < 4; edge++ )
+            for( int i = 0; i < 4; i++ )
+                bs[dir][edge][i] = non_zero;
+}
+
+
 static ALWAYS_INLINE void deblock_edge( x264_t *h, pixel *pix, intptr_t i_stride, uint8_t bS[4], int i_qp,
                                         int a, int b, int b_chroma, x264_deblock_inter_t pf_inter )
 {
@@ -716,7 +912,7 @@ void x264_deblock_v_chroma_neon( uint8_t *pix, intptr_t stride, int alpha, int b
 void x264_deblock_h_chroma_neon( uint8_t *pix, intptr_t stride, int alpha, int beta, int8_t *tc0 );
 #endif
 
-void x264_deblock_init( int cpu, x264_deblock_function_t *pf, int b_mbaff )
+void x264_deblock_init( x264_t *h, int cpu, x264_deblock_function_t *pf, int b_mbaff )
 {
     pf->deblock_luma[1] = deblock_v_luma_c;
     pf->deblock_luma[0] = deblock_h_luma_c;
@@ -825,4 +1021,17 @@ void x264_deblock_init( int cpu, x264_deblock_function_t *pf, int b_mbaff )
     /* These functions are equivalent, so don't duplicate them. */
     pf->deblock_chroma_422_mbaff = pf->deblock_h_chroma_420;
     pf->deblock_chroma_422_intra_mbaff = pf->deblock_h_chroma_420_intra;
+
+    if( h->param.b_vp8 )
+    {
+        pf->vp8_deblock_luma[1] = vp8_deblock_v_luma_c;
+        pf->vp8_deblock_luma[0] = vp8_deblock_h_luma_c;
+        pf->vp8_deblock_chroma[1] = vp8_deblock_v_chroma_c;
+        pf->vp8_deblock_chroma[0] = vp8_deblock_h_chroma_c;
+        pf->vp8_deblock_luma_edge[1] = vp8_deblock_v_luma_edge_c;
+        pf->vp8_deblock_luma_edge[0] = vp8_deblock_h_luma_edge_c;
+        pf->vp8_deblock_chroma_edge[1] = vp8_deblock_v_chroma_edge_c;
+        pf->vp8_deblock_chroma_edge[0] = vp8_deblock_h_chroma_edge_c;
+        pf->deblock_strength = vp8_deblock_strength_c;
+    }
 }
