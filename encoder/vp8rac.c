@@ -192,6 +192,51 @@ static ALWAYS_INLINE void x264_vp8rac_block_residual_cbf_internal( x264_t *h, x2
 #define x264_vp8rac_block_residual_cbf( h, rc, probs, idx, l, nnz_pred )\
     x264_vp8rac_block_residual_cbf_internal( h, rc, probs, idx, l, nnz_pred, 1 )
 
+static ALWAYS_INLINE void x264_vp8rac_mb_header_i( x264_t *h, x264_vp8rac_t *rc, int i_mb_type )
+{
+    /* mb type */
+    if( i_mb_type == I_4x4 )
+    {
+        x264_vp8rac_encode_decision( rc, 145, 0 );
+        for( int i = 0; i < 16; i++ )
+        {
+            int i_mode = x264_mb_pred_mode4x4_fix( h->mb.cache.intra4x4_pred_mode[x264_raster8[i]] );
+            int left = x264_mb_pred_mode4x4_fix( h->mb.cache.intra4x4_pred_mode[x264_raster8[i] - 1] );
+            int top  = x264_mb_pred_mode4x4_fix( h->mb.cache.intra4x4_pred_mode[x264_raster8[i] - 8] );
+            top = top < 0 ? I_PRED_4x4_DC : top;
+            left = left < 0 ? I_PRED_4x4_DC : left;
+            x264_vp8rac_intra4x4_pred_mode( h, rc, i_mode, x264_vp8_intra4x4_pred_probs[top][left] );
+        }
+    }
+    else
+    {
+        int pred = x264_mb_pred_mode16x16_fix[h->mb.i_intra16x16_pred_mode];
+        int a = pred & 1;
+        int b = pred >> 1;
+
+        /* i16x16 pred modes */
+        x264_vp8rac_encode_decision( rc, 145, 1 );
+        x264_vp8rac_encode_decision( rc, 156, a );
+        x264_vp8rac_encode_decision( rc, a?128:163, a?b:!b );
+    }
+
+    /* chroma pred mode */
+    int pred = x264_mb_chroma_pred_mode_fix[h->mb.i_chroma_pred_mode];
+    if( pred != I_PRED_CHROMA_DC )
+    {
+        x264_vp8rac_encode_decision( rc, 142, 1 );
+        if( pred != I_PRED_CHROMA_V )
+        {
+            x264_vp8rac_encode_decision( rc, 114, 1 );
+            x264_vp8rac_encode_decision( rc, 183, pred>>1 );
+        }
+        else
+            x264_vp8rac_encode_decision( rc, 114, 0 );
+    }
+    else
+        x264_vp8rac_encode_decision( rc, 142, 0 );
+}
+
 void x264_macroblock_write_vp8rac( x264_t *h, x264_vp8rac_t *partition_rac )
 {
     x264_vp8rac_t *cb = &h->vp8.header_rac;
@@ -204,49 +249,7 @@ void x264_macroblock_write_vp8rac( x264_t *h, x264_vp8rac_t *partition_rac )
     x264_vp8rac_encode_decision( cb, 0x80, !h->mb.cbp[h->mb.i_mb_xy] );
 
     if( h->sh.i_type == SLICE_TYPE_I )
-    {
-        /* mb type */
-        if( i_mb_type == I_4x4 )
-        {
-            x264_vp8rac_encode_decision( cb, 145, 0 );
-            for( int i = 0; i < 16; i++ )
-            {
-                int i_mode = x264_mb_pred_mode4x4_fix( h->mb.cache.intra4x4_pred_mode[x264_raster8[i]] );
-                int left = x264_mb_pred_mode4x4_fix( h->mb.cache.intra4x4_pred_mode[x264_raster8[i] - 1] );
-                int top  = x264_mb_pred_mode4x4_fix( h->mb.cache.intra4x4_pred_mode[x264_raster8[i] - 8] );
-                top = top < 0 ? I_PRED_4x4_DC : top;
-                left = left < 0 ? I_PRED_4x4_DC : left;
-                x264_vp8rac_intra4x4_pred_mode( h, cb, i_mode, x264_vp8_intra4x4_pred_probs[top][left] );
-            }
-        }
-        else
-        {
-            int pred = x264_mb_pred_mode16x16_fix[h->mb.i_intra16x16_pred_mode];
-            int a = pred & 1;
-            int b = pred >> 1;
-
-            /* i16x16 pred modes */
-            x264_vp8rac_encode_decision( cb, 145, 1 );
-            x264_vp8rac_encode_decision( cb, 156, a );
-            x264_vp8rac_encode_decision( cb, a?128:163, a?b:!b );
-        }
-
-        /* chroma pred mode */
-        int pred = x264_mb_chroma_pred_mode_fix[h->mb.i_chroma_pred_mode];
-        if( pred != I_PRED_CHROMA_DC )
-        {
-            x264_vp8rac_encode_decision( cb, 142, 1 );
-            if( pred != I_PRED_CHROMA_V )
-            {
-                x264_vp8rac_encode_decision( cb, 114, 1 );
-                x264_vp8rac_encode_decision( cb, 183, pred>>1 );
-            }
-            else
-                x264_vp8rac_encode_decision( cb, 114, 0 );
-        }
-        else
-            x264_vp8rac_encode_decision( cb, 142, 0 );
-    }
+        x264_vp8rac_mb_header_i( h, cb, i_mb_type );
 #if !RDO_SKIP_BS
     i_mb_pos_tex = x264_vp8rac_pos( cb );
     h->stat.frame.i_mv_bits += i_mb_pos_tex - i_mb_pos_start;
