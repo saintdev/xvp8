@@ -373,7 +373,7 @@ const uint8_t x264_vp8_dct_update_probs[4][8][3][NUM_DCT_TOKENS-1] =
     },
 };
 
-const uint8_t x264_vp8_intra4x4_pred_probs[10][10][9] =
+const uint8_t x264_vp8_intra_i4x4_pred_probs[10][10][9] =
 {
     {
         {  39,  53, 200,  87,  26,  21,  43, 232, 171 },
@@ -495,6 +495,11 @@ const uint8_t x264_vp8_intra4x4_pred_probs[10][10][9] =
         {  66,  45,  25, 102, 197, 189,  23,  18,  22 },
         {  72, 187, 100, 130, 157, 111,  32,  75,  80 },
     },
+};
+
+const uint8_t x264_vp8_inter_i4x4_pred_probs[9] =
+{
+    120, 90, 79, 133, 87, 85, 80, 111, 151
 };
 
 static const uint8_t x264_vp8rac_renorm_shift[256] =
