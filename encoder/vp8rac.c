@@ -206,7 +206,7 @@ void x264_macroblock_write_vp8rac( x264_t *h, x264_vp8rac_t *partition_rac )
     if( h->sh.i_type == SLICE_TYPE_I )
     {
         /* mb type */
-        if( h->mb.i_type == I_4x4 )
+        if( i_mb_type == I_4x4 )
         {
             x264_vp8rac_encode_decision( cb, 145, 0 );
             for( int i = 0; i < 16; i++ )
