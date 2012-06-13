@@ -502,6 +502,12 @@ const uint8_t x264_vp8_inter_i4x4_pred_probs[9] =
     120, 90, 79, 133, 87, 85, 80, 111, 151
 };
 
+const uint8_t x264_vp8_intra_chroma_pred_probs[2][3] =
+{
+    { 142, 114, 183, }, /* SLICE_TYPE_I */
+    { 162, 101, 204, }, /* SLICE_TYPE_P */
+};
+
 static const uint8_t x264_vp8rac_renorm_shift[256] =
 {
     0, 7, 6, 6, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4,

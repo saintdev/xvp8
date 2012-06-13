@@ -48,12 +48,6 @@ static const uint8_t *const dct_cat_probs[] =
 
 static const uint8_t dct_cat_bits[] = { 1, 2, 3, 4, 5, 11 };
 
-static const uint8_t vp8_intra_chroma_pred_probs[2][3] =
-{
-    { 142, 114, 183, },
-    { 162, 101, 204, },
-};
-
 static void x264_vp8rac_intra4x4_pred_mode( x264_t *h, x264_vp8rac_t *rc, int i_mode, const uint8_t prob[9] )
 {
     if( i_mode == I_PRED_4x4_DC )
@@ -245,7 +239,7 @@ static ALWAYS_INLINE void x264_vp8rac_mb_header_i( x264_t *h, x264_vp8rac_t *rc,
 
     /* chroma pred mode */
     int pred = x264_mb_chroma_pred_mode_fix[h->mb.i_chroma_pred_mode];
-    x264_vp8rac_intra_chroma_pred_mode( h, rc, pred, vp8_intra_chroma_pred_probs[0] );
+    x264_vp8rac_intra_chroma_pred_mode( h, rc, pred, x264_vp8_intra_chroma_pred_probs[0] );
 }
 
 static ALWAYS_INLINE void x264_vp8rac_mb_header_p( x264_t *h, x264_vp8rac_t *rc, int i_mb_type )
@@ -291,7 +285,7 @@ static ALWAYS_INLINE void x264_vp8rac_mb_header_p( x264_t *h, x264_vp8rac_t *rc,
         }
         /* intra chroma pred mode */
         int pred = x264_mb_chroma_pred_mode_fix[h->mb.i_chroma_pred_mode];
-        x264_vp8rac_intra_chroma_pred_mode( h, rc, pred, vp8_intra_chroma_pred_probs[1] );
+        x264_vp8rac_intra_chroma_pred_mode( h, rc, pred, x264_vp8_intra_chroma_pred_probs[1] );
     }
 }
 
