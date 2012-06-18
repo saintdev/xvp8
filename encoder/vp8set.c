@@ -82,8 +82,8 @@ void x264_vp8_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh )
 
     if( !keyframe )
     {
-        x264_vp8rac_encode_bypass( cb, 0 ); /* Don't update golden */
-        x264_vp8rac_encode_bypass( cb, 0 ); /* Don't update altref */
+        x264_vp8rac_encode_bypass( cb, 1 ); /* Update golden with current frame */
+        x264_vp8rac_encode_bypass( cb, 1 ); /* Update altref with current frame */
         x264_vp8rac_encode_bypass( cb, 0 ); /* No golden sign bias */
         x264_vp8rac_encode_bypass( cb, 0 ); /* No altref sign bias */
     }
@@ -103,6 +103,14 @@ void x264_vp8_slice_header_write( x264_t *h, bs_t *s, x264_slice_header_t *sh )
     x264_vp8rac_encode_uint_bypass( cb, 0x80, 8 ); /* Just set even probability for now. */
     if( !keyframe )
     {
-        /* MV and mode updates here, we'll deal with them later. */
+        x264_vp8rac_encode_uint_bypass( cb, 0x80, 8 ); /* Even intra mb probability */
+        x264_vp8rac_encode_uint_bypass( cb, 0x80, 8 ); /* Even last ref probability */
+        x264_vp8rac_encode_uint_bypass( cb, 0x80, 8 ); /* Even golden ref probability */
+        x264_vp8rac_encode_bypass( cb, 0 ); /* Don't update I16x16 mode probabilities */
+        x264_vp8rac_encode_bypass( cb, 0 ); /* Don't update chroma intra mode probabilities */
+        /* Don't update MV probabilities */
+        for( int i = 0; i < 2; i++ )
+            for( int j = 0; j < 19; j++ )
+                x264_vp8rac_encode_decision( cb, x264_vp8_mv_update_probs[i][j], 0 );
     }
 }

@@ -3258,7 +3258,12 @@ intra_analysis:
                 analysis.i_satd_i4x4   += analysis.i_satd_chroma;
             }
             else
-                x264_mb_analyse_intra( h, &analysis, i_cost );
+            {
+                if( h->param.b_vp8 )
+                    x264_vp8_mb_analyse_intra( h, &analysis, i_cost );
+                else
+                    x264_mb_analyse_intra( h, &analysis, i_cost );
+            }
 
             i_satd_inter = i_cost;
             i_satd_intra = X264_MIN3( analysis.i_satd_i16x16,
