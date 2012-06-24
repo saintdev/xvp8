@@ -605,3 +605,67 @@ void x264_mb_predict_mv_ref16x16( x264_t *h, int i_list, int i_ref, int16_t mvc[
 
     *i_mvc = i;
 }
+
+void x264_vp8_mb_predict_mv( x264_t *h, int16_t mvp[2], uint8_t probs[4] )
+{
+    enum { ZERO, NEAREST, NEAR, SPLITMV };
+    enum { TOP, LEFT, TOPLEFT };
+    int count[4] = { 0 };
+    int16_t bmv[4][2] = { 0 };
+    int16_t mvs[3][2] = { 0 };
+    int idx = ZERO;
+    int ref[3] =
+    {
+        [LEFT] = h->mb.cache.ref[0][X264_SCAN8_0 - 1],
+        [TOP]  = h->mb.cache.ref[0][X264_SCAN8_0 - 8],
+        [TOPLEFT] = h->mb.cache.ref[0][X264_SCAN8_0 - 8 - 1]
+    };
+
+    CP32( mvs[TOP],     h->mb.cache.mv[0][X264_SCAN8_0 - 8] );
+    CP32( mvs[LEFT],    h->mb.cache.mv[0][X264_SCAN8_0 - 1] );
+    CP32( mvs[TOPLEFT], h->mb.cache.mv[0][X264_SCAN8_0 - 8 - 1] );
+
+    /* We don't count intra or non available MBs here. The spec says
+     * non available MBs are counted, but have a MV of 0x0. However,
+     * this is not what libvpx (and ffvp8) do, so we match their behavior.
+     */
+#define CHECK_MV( n ) \
+    if( ref[n] >= 0 ) \
+    { \
+        uint32_t mv = M32( mvs[n] ); \
+        if( mv ) \
+        { \
+            if( !n || mv != M32( bmv[idx] ) ) \
+                CP32( bmv[++idx], &mv ); \
+            count[idx] += 1 + (n != TOPLEFT); \
+        } \
+        else \
+            count[ZERO] += 1 + (n != TOPLEFT); \
+    }
+
+    CHECK_MV( TOP )
+    CHECK_MV( LEFT )
+    CHECK_MV( TOPLEFT )
+
+    /* See if we have three distinct MVs, or if top-left MV can be merged with NEAREST */
+    if( count[SPLITMV] && M32( bmv[NEAREST] ) == M32( bmv[SPLITMV] ) )
+            count[NEAREST]++;
+
+    /* TODO: 8x16...4x4 */
+    count[SPLITMV] = 0;
+
+    /* Swap near and nearest if necessary */
+    if( count[NEAR] > count[NEAREST] )
+    {
+        XCHG( int, count[NEAREST], count[NEAR] );
+        XCHG( uint32_t, M32( bmv[NEAREST] ), M32( bmv[NEAR] ) );
+    }
+
+    if( count[NEAREST] >= count[ZERO] )
+        CP32( bmv[ZERO], bmv[NEAREST] );
+
+    CP32( mvp, bmv[ZERO] );
+
+    for( int i = 0; i < 4; i++ )
+        probs[i] = x264_vp8_inter_16x16_probs[count[i]][i];
+}

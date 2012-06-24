@@ -95,6 +95,8 @@ extern const uint8_t x264_vp8_inter_i4x4_pred_probs[9];
 extern const uint8_t x264_vp8_intra_chroma_pred_probs[2][3];
 extern const uint8_t x264_vp8_coeff_band[16];
 extern const uint8_t x264_vp8_mv_update_probs[2][19];
+extern const uint8_t x264_vp8_inter_16x16_probs[6][4];
+extern const uint8_t x264_vp8_default_mv_probs[2][19];
 
 #if HAVE_MMX
 #define x264_cabac_encode_decision x264_cabac_encode_decision_asm

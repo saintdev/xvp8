@@ -362,6 +362,7 @@ void x264_mb_predict_mv_pskip( x264_t *h, int16_t mv[2] );
  *      h->mb. need valid ref/partition/sub of current block to be valid
  *      and valid mv/ref from other blocks. */
 void x264_mb_predict_mv( x264_t *h, int i_list, int idx, int i_width, int16_t mvp[2] );
+void x264_vp8_mb_predict_mv( x264_t *h, int16_t mvp[2], uint8_t probs[4] );
 /* x264_mb_predict_mv_direct16x16:
  *      set h->mb.cache.mv and h->mb.cache.ref for B_SKIP or B_DIRECT
  *      h->mb. need only valid values from other blocks.
