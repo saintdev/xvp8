@@ -110,6 +110,38 @@ static void x264_vp8rac_intra_chroma_pred_mode( x264_t *h, x264_vp8rac_t *rc, in
         x264_vp8rac_encode_decision( rc, prob[0], 0 );
 }
 
+static ALWAYS_INLINE void x264_vp8rac_mvd_cpn( x264_t *h, x264_vp8rac_t *rc, int mvd, const uint8_t probs[19] )
+{
+    int i_abs = abs( mvd );
+    if( i_abs < 8 )
+    {
+        int a =  i_abs >> 2;
+        int b = (i_abs >> 1) & 1;
+        int c =  i_abs       & 1;
+
+        x264_vp8rac_encode_decision( rc, probs[0], 0 );
+
+        x264_vp8rac_encode_decision( rc, probs[2], a );
+        x264_vp8rac_encode_decision( rc, a ? probs[6] : probs[3], b );
+        x264_vp8rac_encode_decision( rc, a ? probs[7 + b] : probs[4 + b], c );
+    }
+    else
+    {
+        x264_vp8rac_encode_decision( rc, probs[0], 1 );
+
+        for( int i = 0; i < 3; i++ )
+            x264_vp8rac_encode_decision( rc, probs[9 + i], (i_abs >> i) & 1 );
+        for( int i = 9; i > 3; i-- )
+            x264_vp8rac_encode_decision( rc, probs[9 + i], (i_abs >> i) & 1 );
+
+        if( i_abs >= 16 )
+            x264_vp8rac_encode_decision( rc, probs[9 + 3], (i_abs >> 3) & 1 );
+    }
+
+    if( mvd )
+        x264_vp8rac_encode_decision( rc, probs[1], mvd < 0 );
+}
+
 /* Write a single DCT coefficient */
 static ALWAYS_INLINE void x264_vp8rac_block_residual_coeff( x264_t *h, x264_vp8rac_t *rc, const uint8_t prob[NUM_DCT_TOKENS-1], dctcoef abs_coeff, int sign )
 {
@@ -248,8 +280,37 @@ static ALWAYS_INLINE void x264_vp8rac_mb_header_p( x264_t *h, x264_vp8rac_t *rc,
 
     if( i_mb_type == P_L0 )
     {
+        int16_t mvp[2] = { 0 };
+        uint8_t mv_mode_probs[4] = { 0 };
+
+        x264_vp8_mb_predict_mv( h, mvp, mv_mode_probs );
+
         /* Previous frame only, no golden/altref for now. */
         x264_vp8rac_encode_bypass( rc, 0 );
+
+        if( h->mb.i_partition == D_16x16 )
+        {
+            int16_t mdx = h->mb.cache.mv[0][X264_SCAN8_0][0] - mvp[0];
+            int16_t mdy = h->mb.cache.mv[0][X264_SCAN8_0][1] - mvp[1];
+
+            if( !M32( h->mb.cache.mv[0][X264_SCAN8_0] ) )
+                x264_vp8rac_encode_decision( rc, mv_mode_probs[0], 0 );
+            else
+            {
+                /* TODO: near, nearest */
+                x264_vp8rac_encode_decision( rc, mv_mode_probs[0], 1 );
+                x264_vp8rac_encode_decision( rc, mv_mode_probs[1], 1 );
+                x264_vp8rac_encode_decision( rc, mv_mode_probs[2], 1 );
+                x264_vp8rac_encode_decision( rc, mv_mode_probs[3], 0 );
+
+                x264_vp8rac_mvd_cpn( h, rc, mdy, x264_vp8_default_mv_probs[0] );
+                x264_vp8rac_mvd_cpn( h, rc, mdx, x264_vp8_default_mv_probs[1] );
+            }
+        }
+        else
+        {
+
+        }
 
     }
     else if( i_mb_type == P_8x8)
